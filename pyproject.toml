@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "snmp-fetch"
+version = "0.1.0"
+description = "An opinionated python SNMPv2 library built for rapid database ingestion."
+authors = ["Christopher Aubut <christopher@aubut.me>"]
+
+build = "build.py"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+numpy = "^1.16"
+pandas = "^0.25"
+attrs = "^19.1"
+toolz = "^0.10.0"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.3"
+isort = "^4.3"
+flake8 = "^3.7"
+flake8-isort = "^2.7"
+flake8-docstrings = "^1.3"
+mypy = "^0.720.0"
+numpy-stubs = {git = "https://github.com/numpy/numpy-stubs.git"}
+bandit = "^1.6"
+pytest = "^5.0"
+pytest-cov = "^2.7"
+hypothesis = "^4.32"
+snmpsim = "^0.4.7"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

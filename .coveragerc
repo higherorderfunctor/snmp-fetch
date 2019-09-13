@@ -1,0 +1,8 @@
+[run]
+omit = build,ENV,.git,htmlcov,.hypothesis,.mypy_cache,__pycache__,.pytest_cache,src,stubs
+source = snmp_fetch
+branch = True
+
+[report]
+show_missing = True
+
