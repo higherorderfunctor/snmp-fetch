@@ -1,0 +1,47 @@
+language: python
+python:
+  - "3.7"
+sudo: false
+cache: pip
+
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+            - libperl-dev
+      env:
+        - CC=gcc-8
+        - CXX=g++-8
+      
+before_install:
+  - sudo ln -s "/usr/bin/${CC}" /usr/local/bin/gcc
+  - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
+  - wget https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz -O /tmp/boost.tar.gz
+  - tar -xvf /tmp/boost.tar.gz boost_1_70_0/boost
+  - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/boost_1_70_0/
+  - wget https://github.com/pybind/pybind11/archive/v2.3.0.tar.gz -O /tmp/pybind11.tar.gz
+  - tar -xvf /tmp/pybind11.tar.gz
+  - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/pybind11-2.3.0/include/
+  - wget https://sourceforge.net/projects/net-snmp/files/net-snmp/5.8/net-snmp-5.8.tar.gz/download -O net-snmp.tar.gz
+  - tar xzfv net-snmp.tar.gz
+  - pushd net-snmp-5.8
+  - ./configure --enable-ipv6 --with-defaults
+  - make && sudo make install
+  - sudo ldconfig -v
+  - popd
+
+install:
+  - pip install --upgrade pip
+  - pip install poetry
+  - poetry install -v
+
+script:
+  - poetry run pytest -v --cov --hypothesis-show-statistics tests/
+
+after_success:
+  - coveralls

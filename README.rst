@@ -1,13 +1,31 @@
 snmp-fetch
 ==========
 
-An opinionated SNMPv2 library built for rapid database ingestion.  This is an alpha release.
+|Version badge| |Python version badge| |PyPI format badge| |Build badge| |Coverage badge|
 
+.. |Version badge| image:: https://img.shields.io/pypi/v/snmp-fetch
+   :target: https://pypi.org/project/snmp-fetch/
+
+.. |Python version badge| image:: https://img.shields.io/pypi/pyversions/snmp-fetch
+   :alt: PyPI - Python Version
+   :target: https://pypi.org/project/snmp-fetch/
+  
+.. |PyPI format badge| image:: https://img.shields.io/pypi/format/snmp-fetch
+   :alt: PyPI - Format
+   :target: https://pypi.org/project/snmp-fetch/
+
+.. |Build badge| image:: https://travis-ci.org/higherorderfunctor/snmp-fetch.svg?branch=master
+   :target: https://travis-ci.org/higherorderfunctor/snmp-fetch
+
+.. |Coverage badge| image:: https://coveralls.io/repos/github/higherorderfunctor/snmp-fetch/badge.svg
+   :target: https://coveralls.io/github/higherorderfunctor/snmp-fetch
+
+An opinionated python3.7 SNMPv2 library designed for rapid database ingestion.
 
 Prerequisites
 """""""""""""
 
-Snmp-fetch is built for python 3.7 and c++17.  It is currently tested on python 3.7.4 with gcc 8.   The following prerequisites must also be installed before adding snmp-fetch to your project.
+Snmp-fetch is built for python 3.7 and c++17.  Building is currently only tested on gcc 8.   The following prerequisites must also be installed before adding snmp-fetch to your project.
 
 net-snmp
 ''''''''
@@ -29,7 +47,6 @@ A recent version of net-snmp is required; testing has only been performed agains
    cd .. && rm -rf net-snmp*
    sudo ldconfig -v
 
-
 boost (headers only)
 ''''''''''''''''''''
 
@@ -41,7 +58,6 @@ Boost is a popular C++ library to reduce boilerplate.  Snmp-fetch makes use of s
    tar xzfv boost_1_70_0.tar.gz
    sudo mv boost_1_70_0/boost /usr/local/include/
    rm -rf boost_1_70_0*
-
 
 pybind11
 ''''''''
@@ -71,7 +87,6 @@ Pybind11 is a C++ wrapper around the Python C API to reduce boilerplate.  This i
    cd ../../
    rm -rf pybind11
 
-
 Installation
 """"""""""""
 
@@ -81,7 +96,6 @@ Installation
    poetry add snmp-fetch --git https://gitlab.com/higherorderfunctor/snmp-fetch.git
    # pip
    pip install git+https://gitlab.com/higherorderfunctor/snmp-fetch.git
-
 
 Development
 """""""""""
@@ -112,7 +126,6 @@ Development
 
    # clean up imports
    isort -rc --atomic .
-
 
 Known Limitations
 """""""""""""""""
