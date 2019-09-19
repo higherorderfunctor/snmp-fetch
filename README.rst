@@ -1,10 +1,13 @@
 snmp-fetch
 ==========
 
-|Version badge| |Python version badge| |PyPI format badge| |Build badge| |Coverage badge|
+|Version badge| |Platform badge| |Python version badge| |PyPI format badge| |Build badge| |Coverage badge|
 
 .. |Version badge| image:: https://img.shields.io/pypi/v/snmp-fetch
    :target: https://pypi.org/project/snmp-fetch/
+
+.. |Platform badge| image:: https://img.shields.io/badge/platform-linux-lightgrey
+   :alt: Platform - Linux
 
 .. |Python version badge| image:: https://img.shields.io/pypi/pyversions/snmp-fetch
    :alt: PyPI - Python Version
@@ -25,7 +28,7 @@ An opinionated python3.7 SNMPv2 library designed for rapid database ingestion.
 Prerequisites
 """""""""""""
 
-Snmp-fetch is built for python 3.7 and c++17.  Building is currently only tested on gcc 8.   The following prerequisites must also be installed before adding snmp-fetch to your project.
+Snmp-fetch is a C++ python extension built for python 3.7+ and c++17.  Currently on python 3.7 is supported due to the use of the typing extension.  The following prerequisites must also be installed before adding snmp-fetch to your project.
 
 net-snmp
 ''''''''
