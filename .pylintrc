@@ -7,11 +7,11 @@ extension-pkg-whitelist=snmp_fetch.capi
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=build,ENV,.git,htmlcov,.hypothesis,.mypy_cache,pip-wheel-metadata,__pycache__,.pytest_cache,snmp_fetch.egg-info,src,stubs
+ignore=
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
-ignore-patterns=.*\.(ini|md|rst|lock|toml)
+ignore-patterns=
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().

@@ -163,7 +163,7 @@ run(
     std::vector<var_bind_t> &var_binds,
     std::vector<std::vector<uint8_t>> &results,
     std::vector<SnmpError> &errors,
-    Config &config
+    SnmpConfig &config
 ) {
   
   // do NOT init net-snmp to disable config loading and mib processing

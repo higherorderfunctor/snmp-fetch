@@ -1,5 +1,7 @@
 """Python wrapper to the C API."""
 
-from snmp_fetch import dtype, utils, var_bind
+from snmp_fetch.capi import ErrorType, PduType, SnmpConfig, SnmpError, fetch
 
-__all__ = ['dtype', 'var_bind', 'utils']
+__all__ = [
+    'ErrorType', 'PduType', 'SnmpConfig', 'SnmpError', 'fetch'
+]

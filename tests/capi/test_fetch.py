@@ -7,8 +7,8 @@ import hypothesis
 import hypothesis.strategies as st
 import pytest
 
-import snmp_fetch.capi as csnmp
 import tests.strategies as _st
+from snmp_fetch import PduType, fetch
 from snmp_fetch.utils import convert_oid
 from snmp_fetch.var_bind import var_bind
 
@@ -25,7 +25,7 @@ from snmp_fetch.var_bind import var_bind
     deadline=None
 )
 def test_ambiguous_root_oids(
-        pdu_type: csnmp.pdu_type,
+        pdu_type: PduType,
         hosts: Sequence[Tuple[int, Text, Text]],
         oids: Sequence[Sequence[int]]
 ):
@@ -36,7 +36,7 @@ def test_ambiguous_root_oids(
                 oid=convert_oid(oid)
             ) for oid in oids
         ]
-        csnmp.fetch(
+        fetch(
             pdu_type, hosts,
             [v() for v in vs]
         )
