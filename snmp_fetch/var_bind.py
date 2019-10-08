@@ -158,7 +158,7 @@ class var_bind:
 
 
 def merge_results(
-        results: np.ndarray, var_binds: Sequence[var_bind],
+        results: Sequence[np.ndarray], var_binds: Sequence[var_bind],
         extras: Optional[Any] = None,
         index: Union[Text, Sequence[Text]] = 'host_index'
 ) -> Optional[Any]:

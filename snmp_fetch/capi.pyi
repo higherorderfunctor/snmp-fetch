@@ -75,7 +75,7 @@ class SnmpConfig:
             self,
             retries: int = ...,
             timeout: int = ...,
-            max_active_session: int = ...,
+            max_active_sessions: int = ...,
             max_var_binds_per_pdu: int = ...,
             max_bulk_repetitions: int = ...
     ) -> None:
