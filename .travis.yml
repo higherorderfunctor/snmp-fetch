@@ -41,6 +41,10 @@ install:
   - poetry install -v
 
 script:
+  - poetry run pylint snmp_fetch tests
+  - poetry run flake8 snmp_fetch tests
+  - poetry run mypy -p snmp_fetch -p tests
+  - poetry run bandit -r snmp_fetch
   - poetry run pytest -v --cov --hypothesis-show-statistics tests/
 
 after_success:

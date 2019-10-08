@@ -30,7 +30,7 @@ void *
 create_netsnmp_session(
     host_t &host,
     std::vector<SnmpError> &errors,
-    Config &config
+    SnmpConfig &config
 ) {
 
   // init a net-snmp session template
@@ -90,7 +90,7 @@ void create_session(
     std::vector<var_bind_t> &var_binds,
     std::vector<std::vector<uint8_t>> &results,
     std::vector<SnmpError> &errors,
-    Config &config,
+    SnmpConfig &config,
     std::list<async_state> &sessions
 ) {
 

@@ -18,9 +18,9 @@ extern "C" {
 namespace snmp_fetch {
 
 // default values
-#define SNMP_FETCH__DEFAULT_RETRIES 2
-#define SNMP_FETCH__DEFAULT_TIMEOUT 2
-#define SNMP_FETCH__DEFAULT_MAX_ACTIVE_SESSIONS 8
+#define SNMP_FETCH__DEFAULT_RETRIES 3
+#define SNMP_FETCH__DEFAULT_TIMEOUT 3
+#define SNMP_FETCH__DEFAULT_MAX_ACTIVE_SESSIONS 10
 #define SNMP_FETCH__DEFAULT_MAX_VAR_BINDS_PER_PDU 10
 #define SNMP_FETCH__DEFAULT_MAX_BULK_REPETITIONS 10
 
@@ -50,14 +50,14 @@ enum async_status_t {
 enum PDU_TYPE {
     GET_REQUEST = SNMP_MSG_GET,
     NEXT_REQUEST = SNMP_MSG_GETNEXT,
-    GETBULK_REQUEST = SNMP_MSG_GETBULK,
+    BULKGET_REQUEST = SNMP_MSG_GETBULK,
 };
 
 
 /**
- *  Config - Pure C++ config type exposed through the to python module.
+ *  SnmpConfig - Pure C++ config type exposed through the to python module.
  */
-struct Config {
+struct SnmpConfig {
   ssize_t retries;
   ssize_t timeout;
   size_t max_active_sessions;
@@ -65,9 +65,9 @@ struct Config {
   size_t max_bulk_repetitions;
 
   /**
-   *  Config - Constructor with default values.
+   *  SnmpConfig - Constructor with default values.
    */
-  Config(
+  SnmpConfig(
       ssize_t retries = SNMP_FETCH__DEFAULT_RETRIES,
       ssize_t timeout = SNMP_FETCH__DEFAULT_TIMEOUT,
       size_t max_active_sessions = SNMP_FETCH__DEFAULT_MAX_ACTIVE_SESSIONS,
@@ -81,15 +81,25 @@ struct Config {
     this->max_bulk_repetitions = max_bulk_repetitions;
   }
 
+  friend bool operator==(const SnmpConfig &a, const SnmpConfig &b) {
+    return (
+        (a.retries == b.retries) &
+        (a.timeout == b.timeout) &
+        (a.max_active_sessions == b.max_active_sessions) &
+        (a.max_var_binds_per_pdu == b.max_var_binds_per_pdu) &
+        (a.max_bulk_repetitions == b.max_bulk_repetitions)
+    );
+  }
+
   /**
    *  to_string - String method used for __str__ and __repr__ which mimics attrs.
    *
-   *  @return String representation of a Config.
+   *  @return String representation of a SnmpConfig.
    */
   std::string to_string() {
     return str(
         boost::format(
-          "Config("
+          "SnmpConfig("
           "retries=%1%, "
           "timeout=%2%, "
           "max_active_sessions=%3%, "
@@ -130,9 +140,9 @@ struct SnmpError {
   host_t host;
   std::optional<int64_t> sys_errno;
   std::optional<int64_t> snmp_errno;
-  std::optional<int64_t> errstat;
-  std::optional<int64_t> errindex;
-  std::optional<oid_t> erroid;
+  std::optional<int64_t> err_stat;
+  std::optional<int64_t> err_index;
+  std::optional<oid_t> err_oid;
   std::optional<std::string> message;
 
   /**
@@ -143,9 +153,9 @@ struct SnmpError {
     host_t host,
     std::optional<int64_t> sys_errno = {},
     std::optional<int64_t> snmp_errno = {},
-    std::optional<int64_t> errstat = {},
-    std::optional<int64_t> errindex = {},
-    std::optional<oid_t> erroid = {},
+    std::optional<int64_t> err_stat = {},
+    std::optional<int64_t> err_index = {},
+    std::optional<oid_t> err_oid = {},
     std::optional<std::string> message = {}
   ) {
     this->type = type;
@@ -156,10 +166,23 @@ struct SnmpError {
     );
     this->sys_errno = sys_errno;
     this->snmp_errno = snmp_errno;
-    this->errstat = errstat;
-    this->errindex = errindex;
-    this->erroid = erroid;
+    this->err_stat = err_stat;
+    this->err_index = err_index;
+    this->err_oid = err_oid;
     this->message = message;
+  }
+
+  friend bool operator==(const SnmpError &a, const SnmpError &b) {
+    return (
+        (a.type == b.type) &
+        (a.host == b.host) &
+        (a.sys_errno == b.sys_errno) &
+        (a.snmp_errno == b.snmp_errno) &
+        (a.err_stat == b.err_stat) &
+        (a.err_index == b.err_index) &
+        (a.err_oid == b.err_oid) &
+        (a.message == b.message)
+    );
   }
 
   /**
@@ -196,18 +219,18 @@ struct SnmpError {
         break;
     };
 
-    std::string repr = str(
+    return str(
         boost::format(
           "SnmpError("
           "type=%1%, "
           "Host(index=%2%, hostname='%3%', community='%4%'), "
           "sys_errno=%5%, "
           "snmp_errno=%6%, "
-          "errstat=%7%, "
-          "errindex=%8%, "
-          "var_bind=%9%, "
+          "err_stat=%7%, "
+          "err_index=%8%, "
+          "err_oid=%9%, "
           "message=%10%"
-          ")"//, loc
+          ")"
         )
         % type_string
         % std::to_string(std::get<0>(this->host))
@@ -215,18 +238,16 @@ struct SnmpError {
         % std::get<2>(this->host)
         % (this->sys_errno.has_value() ? std::to_string(*this->sys_errno) : "None")
         % (this->snmp_errno.has_value() ? std::to_string(*this->snmp_errno) : "None")
-        % (this->errstat.has_value() ? std::to_string(*this->errstat) : "None")
-        % (this->errindex.has_value() ? std::to_string(*this->errindex) : "None")
+        % (this->err_stat.has_value() ? std::to_string(*this->err_stat) : "None")
+        % (this->err_index.has_value() ? std::to_string(*this->err_index) : "None")
         % (
-          this->erroid.has_value() ? "'" + oid_to_string(
-            (*this->erroid).data(),
-            (*this->erroid).size()
+          this->err_oid.has_value() ? "'" + oid_to_string(
+            (*this->err_oid).data(),
+            (*this->err_oid).size()
           ) + "'" : "None"
         )
-        % ("'" + this->message.has_value() ? *this->message + "'" : "None")
+        % (this->message.has_value() ? "'" + *this->message + "'" : "None")
     );
-    // std::cerr << repr << std::endl;
-    return repr;
   }
 };
 
@@ -246,7 +267,7 @@ struct async_state {
   std::vector<std::vector<oid_t>> next_var_binds;
   std::vector<std::vector<uint8_t>> *results;
   std::vector<SnmpError> *errors;
-  Config *config;
+  SnmpConfig *config;
 };
 
 }

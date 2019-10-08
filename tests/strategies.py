@@ -8,7 +8,7 @@ import hypothesis
 import hypothesis.strategies as st
 import numpy as np
 
-import snmp_fetch.capi as csnmp
+from snmp_fetch import ErrorType, PduType
 
 VALID_HOSTNAMES = [
     '127.0.0.1:1161',  # IPv4
@@ -112,24 +112,42 @@ def dtype_struct() -> hypothesis.searchstrategy.strategies.SearchStrategy[Any]:
     ), min_size=1, unique_by=lambda x: x[0])
 
 
-def pdu_type() -> hypothesis.searchstrategy.strategies.SearchStrategy[Any]:
+def pdu_type() -> hypothesis.searchstrategy.strategies.SearchStrategy[PduType]:
     """Generate a PDU type."""
     return st.one_of([
-        st.just(csnmp.GET_REQUEST),
-        st.just(csnmp.NEXT_REQUEST),
-        st.just(csnmp.GETBULK_REQUEST)
+        st.just(PduType.GET_REQUEST),
+        st.just(PduType.NEXT_REQUEST),
+        st.just(PduType.BULKGET_REQUEST)
     ])
 
 
-def oids() -> hypothesis.searchstrategy.strategies.SearchStrategy[Any]:
+def oids() -> (
+        hypothesis.searchstrategy.strategies.SearchStrategy[Sequence[int]]
+):
     """Generate integer oids."""
     return st.lists(
         st.integers(min_value=0, max_value=2 ^ 64 - 1), min_size=1
     )
 
 
-def bad_oids() -> hypothesis.searchstrategy.strategies.SearchStrategy[Any]:
+def bad_oids() -> hypothesis.searchstrategy.strategies.SearchStrategy[Text]:
     """Generate bad text oids."""
     return st.text().filter(
         lambda x: re.match(r'^\.?\d+(\.\d+)*$', x) is None
     )
+
+
+def error_type() -> (
+        hypothesis.searchstrategy.strategies.SearchStrategy[ErrorType]
+):
+    """Generate a PDU type."""
+    return st.one_of([
+        st.just(ErrorType.SESSION_ERROR),
+        st.just(ErrorType.CREATE_REQUEST_PDU_ERROR),
+        st.just(ErrorType.SEND_ERROR),
+        st.just(ErrorType.BAD_RESPONSE_PDU_ERROR),
+        st.just(ErrorType.TIMEOUT_ERROR),
+        st.just(ErrorType.ASYNC_PROBE_ERROR),
+        st.just(ErrorType.TRANSPORT_DISCONNECT_ERROR),
+        st.just(ErrorType.CREATE_RESPONSE_PDU_ERROR),
+    ])

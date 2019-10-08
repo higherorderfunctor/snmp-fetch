@@ -2,9 +2,7 @@
 
 import ipaddress as ip
 from operator import add
-from typing import (
-    Any, Callable, Optional, Sequence, Text, Tuple, TypeVar, Union
-)
+from typing import Any, Callable, Optional, Sequence, Text, Tuple, TypeVar, Union
 
 import numpy as np
 

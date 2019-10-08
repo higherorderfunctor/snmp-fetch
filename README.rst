@@ -132,7 +132,7 @@ Known Limitations
 
 - The library only supports SNMPv2 at this time.
 
-- `GETBULK_REQUEST` and `NEXT_REQUEST` will always perform a walk.
+- `BULKGET_REQUEST` and `NEXT_REQUEST` will always perform a walk.
 
 - Walks will always end if the root of the oid runs past the requested oid.
 

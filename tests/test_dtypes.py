@@ -11,8 +11,8 @@ import numpy as np
 from toolz.functoolz import compose
 
 from snmp_fetch.dtype import (
-    IPV4_MASK_LOOKUP_TABLE, IPV6_MASK_LOOKUP_TABLE, cast_ip_array, ip_address,
-    ip_interface, ip_network
+    IPV4_MASK_LOOKUP_TABLE, IPV6_MASK_LOOKUP_TABLE, cast_ip_array, ip_address, ip_interface,
+    ip_network
 )
 from snmp_fetch.fp import star
 
