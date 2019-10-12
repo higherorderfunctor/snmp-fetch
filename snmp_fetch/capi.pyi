@@ -16,6 +16,7 @@ class SnmpErrorType(type):
     ASYNC_PROBE_ERROR: 'SnmpErrorType'
     TRANSPORT_DISCONNECT_ERROR: 'SnmpErrorType'
     CREATE_RESPONSE_PDU_ERROR: 'SnmpErrorType'
+    VALUE_WARNING: 'SnmpErrorType'
 
 
 class SnmpError:

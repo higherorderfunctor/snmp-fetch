@@ -226,6 +226,7 @@ PYBIND11_MODULE(capi, m) {
     .value("ASYNC_PROBE_ERROR", ASYNC_PROBE_ERROR)
     .value("TRANSPORT_DISCONNECT_ERROR", TRANSPORT_DISCONNECT_ERROR)
     .value("CREATE_RESPONSE_PDU_ERROR", CREATE_RESPONSE_PDU_ERROR)
+    .value("VALUE_WARNING", VALUE_WARNING)
     .export_values();
 
   // expose the SnmpError class to python

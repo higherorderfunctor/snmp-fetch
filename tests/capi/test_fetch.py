@@ -45,9 +45,13 @@ def test_ambiguous_root_oids(
         )
 
 
-@hypothesis.given(hosts=_st.valid_hostnames())
-@hypothesis.settings(deadline=None)
-def test_no_such_instance(  # type: ignore
+@hypothesis.given(
+    hosts=_st.valid_hostnames()
+)  # type: ignore
+@hypothesis.settings(
+    deadline=None
+)
+def test_no_such_instance(
         hosts: Sequence[Tuple[int, Text, Text]]
 ) -> None:
     """Test ambiguous root oids."""
@@ -59,13 +63,17 @@ def test_no_such_instance(  # type: ignore
     assert results[0].size == 0
     assert len(errors) == len(hosts)
     for error in errors:
-        assert error.type == SnmpErrorType.BAD_RESPONSE_PDU_ERROR
+        assert error.type == SnmpErrorType.VALUE_WARNING
         assert error.message == 'NO_SUCH_INSTANCE'
 
 
-@hypothesis.given(hosts=_st.valid_hostnames())
-@hypothesis.settings(deadline=None)
-def test_end_of_mib_view(  # type: ignore
+@hypothesis.given(
+    hosts=_st.valid_hostnames()
+)  # type: ignore
+@hypothesis.settings(
+    deadline=None
+)
+def test_end_of_mib_view(
         hosts: Sequence[Tuple[int, Text, Text]]
 ) -> None:
     """Test ambiguous root oids."""
@@ -78,5 +86,5 @@ def test_end_of_mib_view(  # type: ignore
     assert results[0].size == 0
     assert len(errors) == len(hosts) * config.max_bulk_repetitions
     for error in errors:
-        assert error.type == SnmpErrorType.BAD_RESPONSE_PDU_ERROR
+        assert error.type == SnmpErrorType.VALUE_WARNING
         assert error.message == 'END_OF_MIB_VIEW'

@@ -5,6 +5,7 @@
 #ifndef SNMP_FETCH__RESULTS_HPP
 #define SNMP_FETCH__RESULTS_HPP
 
+#include <map>
 #include <time.h>
 #include <boost/range/combine.hpp>
 
@@ -20,6 +21,12 @@ extern "C" {
 
 namespace snmp_fetch {
 
+std::map<uint8_t, std::string> warning_value_types = {
+  {128, "NO_SUCH_OBJECT"},
+  {129, "NO_SUCH_INSTANCE"},
+  {130, "END_OF_MIB_VIEW"}
+};
+
 /**
  *  append_result - Append one response variable binding to the results.
  *
@@ -30,23 +37,21 @@ void append_result(
     variable_list &resp_var_bind,
     async_state &state
 ) {
-  if (resp_var_bind.type == 128 || resp_var_bind.type == 129 || resp_var_bind.type == 130) {
+  // test for non-value types and generate an error if matched
+  if (warning_value_types.find(resp_var_bind.type) != warning_value_types.end()) {
     oid_t err_var_bind;
     err_var_bind.assign(
         resp_var_bind.name, resp_var_bind.name + resp_var_bind.name_length
     );
     state.errors->push_back(SnmpError(
-          BAD_RESPONSE_PDU_ERROR,
+          VALUE_WARNING,
           state.host,
           {},
           {},
           {},
           {},
           err_var_bind,
-          resp_var_bind.type == 128 ? "NO_SUCH_OBJECT" :
-          resp_var_bind.type == 129 ? "NO_SUCH_INSTANCE" :
-          resp_var_bind.type == 130 ? "END_OF_MIB_VIEW" :
-          "UNKNOWN_PDU_TYPE"  // should never get here
+          warning_value_types[resp_var_bind.type]
     ));
     return;
   }
@@ -118,7 +123,7 @@ void append_result(
   if (oid_test == -1)
     return;
 
-  // If performing a walk, verify the OID is increasing; else discard the response.
+  // if performing a walk, verify the OID is increasing; else discard the response
   if (state.pdu_type != SNMP_MSG_GET && oid_test == 0)
     return;
 

@@ -129,6 +129,7 @@ enum SNMP_ERROR_TYPE {
     ASYNC_PROBE_ERROR,
     TRANSPORT_DISCONNECT_ERROR,
     CREATE_RESPONSE_PDU_ERROR,
+    VALUE_WARNING
 };
 
 
@@ -216,6 +217,9 @@ struct SnmpError {
         break;
       case CREATE_RESPONSE_PDU_ERROR:
         type_string = "CREATE_RESPONSE_PDU_ERROR";
+        break;
+      case VALUE_WARNING:
+        type_string = "VALUE_WARNING";
         break;
     };
 
