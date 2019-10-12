@@ -8,9 +8,12 @@ import hypothesis.strategies as st
 import pytest
 
 import tests.strategies as _st
-from snmp_fetch import PduType, fetch
+from snmp_fetch import PduType, SnmpConfig, SnmpErrorType, fetch
 from snmp_fetch.utils import convert_oid
 from snmp_fetch.var_bind import var_bind
+from tests.fixtures import snmpsimd
+
+__all__ = ['snmpsimd']
 
 
 @hypothesis.given(
@@ -28,7 +31,7 @@ def test_ambiguous_root_oids(
         pdu_type: PduType,
         hosts: Sequence[Tuple[int, Text, Text]],
         oids: Sequence[Sequence[int]]
-):
+) -> None:
     """Test ambiguous root oids."""
     with pytest.raises(ValueError):
         vs = [
@@ -40,3 +43,40 @@ def test_ambiguous_root_oids(
             pdu_type, hosts,
             [v() for v in vs]
         )
+
+
+@hypothesis.given(hosts=_st.valid_hostnames())
+@hypothesis.settings(deadline=None)
+def test_no_such_instance(  # type: ignore
+        hosts: Sequence[Tuple[int, Text, Text]]
+) -> None:
+    """Test ambiguous root oids."""
+    results, errors = fetch(
+        PduType.GET_REQUEST, hosts, [var_bind(oid='1')()]
+    )
+
+    assert len(results) == 1
+    assert results[0].size == 0
+    assert len(errors) == len(hosts)
+    for error in errors:
+        assert error.type == SnmpErrorType.BAD_RESPONSE_PDU_ERROR
+        assert error.message == 'NO_SUCH_INSTANCE'
+
+
+@hypothesis.given(hosts=_st.valid_hostnames())
+@hypothesis.settings(deadline=None)
+def test_end_of_mib_view(  # type: ignore
+        hosts: Sequence[Tuple[int, Text, Text]]
+) -> None:
+    """Test ambiguous root oids."""
+    config = SnmpConfig()
+    results, errors = fetch(
+        PduType.BULKGET_REQUEST, hosts, [var_bind(oid='2.0')()], config
+    )
+
+    assert len(results) == 1
+    assert results[0].size == 0
+    assert len(errors) == len(hosts) * config.max_bulk_repetitions
+    for error in errors:
+        assert error.type == SnmpErrorType.BAD_RESPONSE_PDU_ERROR
+        assert error.message == 'END_OF_MIB_VIEW'

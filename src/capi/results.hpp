@@ -30,6 +30,27 @@ void append_result(
     variable_list &resp_var_bind,
     async_state &state
 ) {
+  if (resp_var_bind.type == 128 || resp_var_bind.type == 129 || resp_var_bind.type == 130) {
+    oid_t err_var_bind;
+    err_var_bind.assign(
+        resp_var_bind.name, resp_var_bind.name + resp_var_bind.name_length
+    );
+    state.errors->push_back(SnmpError(
+          BAD_RESPONSE_PDU_ERROR,
+          state.host,
+          {},
+          {},
+          {},
+          {},
+          err_var_bind,
+          resp_var_bind.type == 128 ? "NO_SUCH_OBJECT" :
+          resp_var_bind.type == 129 ? "NO_SUCH_INSTANCE" :
+          resp_var_bind.type == 130 ? "END_OF_MIB_VIEW" :
+          "UNKNOWN_PDU_TYPE"  // should never get here
+    ));
+    return;
+  }
+
   // get a timestamp for the result
   time_t timestamp;
   time(&timestamp);
@@ -97,7 +118,7 @@ void append_result(
   if (oid_test == -1)
     return;
 
-  // if performing a walk, verify the OID is increasing; else discard the response
+  // If performing a walk, verify the OID is increasing; else discard the response.
   if (state.pdu_type != SNMP_MSG_GET && oid_test == 0)
     return;
 

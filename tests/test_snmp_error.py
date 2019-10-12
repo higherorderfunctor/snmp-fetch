@@ -6,7 +6,7 @@ from typing import Text
 import hypothesis
 import hypothesis.strategies as st
 
-from snmp_fetch import ErrorType, SnmpError
+from snmp_fetch import SnmpError, SnmpErrorType
 from tests import strategies as _st
 
 
@@ -17,7 +17,7 @@ from tests import strategies as _st
     community=st.text()
 )
 def test_pickle_snmp_error(
-        _type: ErrorType,
+        _type: SnmpErrorType,
         host_index: int,
         hostname: Text,
         community: Text

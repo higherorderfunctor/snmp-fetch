@@ -8,7 +8,7 @@ import hypothesis
 import hypothesis.strategies as st
 import numpy as np
 
-from snmp_fetch import ErrorType, PduType
+from snmp_fetch import PduType, SnmpErrorType
 
 VALID_HOSTNAMES = [
     '127.0.0.1:1161',  # IPv4
@@ -138,16 +138,16 @@ def bad_oids() -> hypothesis.searchstrategy.strategies.SearchStrategy[Text]:
 
 
 def error_type() -> (
-        hypothesis.searchstrategy.strategies.SearchStrategy[ErrorType]
+        hypothesis.searchstrategy.strategies.SearchStrategy[SnmpErrorType]
 ):
     """Generate a PDU type."""
     return st.one_of([
-        st.just(ErrorType.SESSION_ERROR),
-        st.just(ErrorType.CREATE_REQUEST_PDU_ERROR),
-        st.just(ErrorType.SEND_ERROR),
-        st.just(ErrorType.BAD_RESPONSE_PDU_ERROR),
-        st.just(ErrorType.TIMEOUT_ERROR),
-        st.just(ErrorType.ASYNC_PROBE_ERROR),
-        st.just(ErrorType.TRANSPORT_DISCONNECT_ERROR),
-        st.just(ErrorType.CREATE_RESPONSE_PDU_ERROR),
+        st.just(SnmpErrorType.SESSION_ERROR),
+        st.just(SnmpErrorType.CREATE_REQUEST_PDU_ERROR),
+        st.just(SnmpErrorType.SEND_ERROR),
+        st.just(SnmpErrorType.BAD_RESPONSE_PDU_ERROR),
+        st.just(SnmpErrorType.TIMEOUT_ERROR),
+        st.just(SnmpErrorType.ASYNC_PROBE_ERROR),
+        st.just(SnmpErrorType.TRANSPORT_DISCONNECT_ERROR),
+        st.just(SnmpErrorType.CREATE_RESPONSE_PDU_ERROR),
     ])
