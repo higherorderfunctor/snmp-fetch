@@ -25,7 +25,7 @@ An opinionated python3.7 SNMPv2 library designed for rapid database ingestion.
 Prerequisites
 """""""""""""
 
-Snmp-fetch is built for python 3.7 and c++17.  Building is currently only tested on gcc 8.   The following prerequisites must also be installed before adding snmp-fetch to your project.
+Snmp-fetch is built for python 3.7 and c++17.  Building is currently only tested on gcc 8 and each release is only tested against the latest version of each prerequisite dependency.  The following prerequisites must be installed before adding snmp-fetch to your project.
 
 net-snmp
 ''''''''
@@ -54,10 +54,10 @@ Boost is a popular C++ library to reduce boilerplate.  Snmp-fetch makes use of s
 
 .. code:: console
 
-   wget https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz
-   tar xzfv boost_1_70_0.tar.gz
-   sudo mv boost_1_70_0/boost /usr/local/include/
-   rm -rf boost_1_70_0*
+   wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+   tar xzfv boost_1_71_0.tar.gz
+   sudo mv boost_1_71_0/boost /usr/local/include/
+   rm -rf boost_1_71_0*
 
 pybind11
 ''''''''
