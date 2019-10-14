@@ -19,6 +19,8 @@ matrix:
         - CXX=g++-8
       
 before_install:
+  - echo '{"ipv6":true,"fixed-cidr-v6":"2001:db8:1::/64"}' | sudo tee /etc/docker/daemon.json
+  - sudo service docker restart
   - sudo ln -s "/usr/bin/${CC}" /usr/local/bin/gcc
   - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
   - wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz -O /tmp/boost.tar.gz
