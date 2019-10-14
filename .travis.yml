@@ -37,10 +37,13 @@ before_install:
       tar xzfv net-snmp.tar.gz;
       pushd net-snmp-5.8;
       ./configure --enable-ipv6 --with-defaults;
-      make && sudo make install;
-      sudo ldconfig -v;
+      make;
       popd;
     fi
+  - pushd net-snmp-5.8
+  - sudo make install
+  - sudo ldconfig -v
+  - popd
 
 install:
   - pip install --upgrade pip
