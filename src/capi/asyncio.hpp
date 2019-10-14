@@ -73,7 +73,7 @@ void async_sessions_send(
         char *message;
         int sys_errno;
         int snmp_errno;
-        snmp_sess_error(&st.session, &sys_errno, &snmp_errno, &message);
+        snmp_sess_error(st.session, &sys_errno, &snmp_errno, &message);
         st.errors->push_back(SnmpError(
               SEND_ERROR,
               st.host,
