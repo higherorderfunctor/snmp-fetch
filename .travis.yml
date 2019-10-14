@@ -32,8 +32,7 @@ before_install:
   - wget https://github.com/pybind/pybind11/archive/v2.4.2.tar.gz -O /tmp/pybind11.tar.gz
   - tar -xvf /tmp/pybind11.tar.gz
   - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/pybind11-2.4.2/include/
-  - |
-    if [ ! -d "net-snmp-5.8" ] || [ -z "$(ls net-snmp-5.8)" ];; then
+  - if [ ! -d "net-snmp-5.8" ] || [ -z "$(ls net-snmp-5.8)" ]; then
       wget https://sourceforge.net/projects/net-snmp/files/net-snmp/5.8/net-snmp-5.8.tar.gz/download -O net-snmp.tar.gz;
       tar xzfv net-snmp.tar.gz;
       pushd net-snmp-5.8;
