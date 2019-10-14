@@ -6,9 +6,6 @@ from typing import Any, MutableMapping
 
 from setuptools import Extension
 
-NETSNMP_BASEDIR = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), 'libs'
-)
 NETSNMP_LIBS = os.popen('net-snmp-config --libs').read()
 
 EXTENSIONS = [

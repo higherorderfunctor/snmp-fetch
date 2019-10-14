@@ -38,6 +38,7 @@ void append_result(
     async_state &state
 ) {
   // test for non-value types and generate an error if matched
+  /*
   if (warning_value_types.find(resp_var_bind.type) != warning_value_types.end()) {
     oid_t err_var_bind;
     err_var_bind.assign(
@@ -54,7 +55,7 @@ void append_result(
           warning_value_types[resp_var_bind.type]
     ));
     return;
-  }
+  }*/
 
   // get a timestamp for the result
   time_t timestamp;
