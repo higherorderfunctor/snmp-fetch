@@ -5,6 +5,7 @@
 #ifndef SNMP_FETCH__RESULTS_HPP
 #define SNMP_FETCH__RESULTS_HPP
 
+#include <map>
 #include <time.h>
 #include <boost/range/combine.hpp>
 
@@ -20,6 +21,12 @@ extern "C" {
 
 namespace snmp_fetch {
 
+std::map<uint8_t, std::string> warning_value_types = {
+  {128, "NO_SUCH_OBJECT"},
+  {129, "NO_SUCH_INSTANCE"},
+  {130, "END_OF_MIB_VIEW"}
+};
+
 /**
  *  append_result - Append one response variable binding to the results.
  *
@@ -30,6 +37,25 @@ void append_result(
     variable_list &resp_var_bind,
     async_state &state
 ) {
+  // test for non-value types and generate an error if matched
+  if (warning_value_types.find(resp_var_bind.type) != warning_value_types.end()) {
+    oid_t err_var_bind;
+    err_var_bind.assign(
+        resp_var_bind.name, resp_var_bind.name + resp_var_bind.name_length
+    );
+    state.errors->push_back(SnmpError(
+          VALUE_WARNING,
+          state.host,
+          {},
+          {},
+          {},
+          {},
+          err_var_bind,
+          warning_value_types[resp_var_bind.type]
+    ));
+    return;
+  }
+
   // get a timestamp for the result
   time_t timestamp;
   time(&timestamp);

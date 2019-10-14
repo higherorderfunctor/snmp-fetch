@@ -25,7 +25,7 @@ An opinionated python3.7 SNMPv2 library designed for rapid database ingestion.
 Prerequisites
 """""""""""""
 
-Snmp-fetch is built for python 3.7 and c++17.  Building is currently only tested on gcc 8.   The following prerequisites must also be installed before adding snmp-fetch to your project.
+Snmp-fetch is built for python 3.7 and c++17.  Building is currently only tested on gcc 8 and each release is only tested against the latest version of each prerequisite dependency.  The following prerequisites must be installed before adding snmp-fetch to your project.
 
 net-snmp
 ''''''''
@@ -54,10 +54,10 @@ Boost is a popular C++ library to reduce boilerplate.  Snmp-fetch makes use of s
 
 .. code:: console
 
-   wget https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz
-   tar xzfv boost_1_70_0.tar.gz
-   sudo mv boost_1_70_0/boost /usr/local/include/
-   rm -rf boost_1_70_0*
+   wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+   tar xzfv boost_1_71_0.tar.gz
+   sudo mv boost_1_71_0/boost /usr/local/include/
+   rm -rf boost_1_71_0*
 
 pybind11
 ''''''''
@@ -70,22 +70,24 @@ Pybind11 is a C++ wrapper around the Python C API to reduce boilerplate.  This i
    pip3.7 install --user pytest
 
    # install cmake
-   wget https://github.com/Kitware/CMake/releases/download/v3.15.1/cmake-3.15.1-Linux-x86_64.sh
-   sudo ./cmake-3.15.1-Linux-x86_64.sh \
+   wget https://github.com/Kitware/CMake/releases/download/v3.15.4/cmake-3.15.4-Linux-x86_64.sh
+   chmod a+x cmake-3.15.4-Linux-x86_64.sh
+   sudo ./cmake-3.15.4-Linux-x86_64.sh \
      --prefix=/usr/local/ \
      --exclude-subdir \
      --skip-license
-   rm cmake-3.15.1-Linux-x86_64.sh
+   rm cmake-3.15.4-Linux-x86_64.sh
 
    # test and install pybind11
-   git clone --depth 1 https://github.com/pybind/pybind11.git
-   cd pybind11
+   wget https://github.com/pybind/pybind11/archive/v2.4.2.tar.gz -O pybind11.tar.gz
+   tar -xvf pybind11.tar.gz
+   cd pybind11-2.4.2
    mkdir -p build && cd build
    cmake .. -DPYBIND11_CPP_STANDARD=-std=c++17 -DDOWNLOAD_CATCH=1
    make check -j 4
    sudo make install
    cd ../../
-   rm -rf pybind11
+   rm -rf pybind11*
 
 Installation
 """"""""""""
@@ -93,9 +95,9 @@ Installation
 .. code:: console
 
    # poetry
-   poetry add snmp-fetch --git https://gitlab.com/higherorderfunctor/snmp-fetch.git
+   poetry add snmp-fetch
    # pip
-   pip install git+https://gitlab.com/higherorderfunctor/snmp-fetch.git
+   pip install snmp-fetch
 
 Development
 """""""""""
@@ -107,7 +109,7 @@ Development
    cd snmp-fetch
    virtualenv -p python3.7 ENV
    source ENV/bin/activate
-   poetry install  # if never installed
+   poetry install
    deactivate && source ENV/bin/activate  # refresh PATH
 
    # fast fail testing
@@ -119,10 +121,11 @@ Development
    coverage html
 
    # linting
-   pylint *
-   flake8
-   mypy -p snmp_fetch -p tests
-   bandit -r snmp_fetch
+   poetry run pylint snmp_fetch tests
+   poetry run flake8 snmp_fetch tests
+   poetry run mypy -p snmp_fetch -p tests
+   poetry run bandit -r snmp_fetch
+   poetry run pytest -v --cov --hypothesis-show-statistics tests/
 
    # clean up imports
    isort -rc --atomic .
@@ -140,4 +143,4 @@ Known Limitations
 
   - This includes the initial request; walks must be performed on an oid prior to the first desired.
 
-  - ENDOFMIBVIEW variable bindings are silently discarded for this same reason.
+- NO_SUCH_INSTANCE, NO_SUCH_OBJECT, and END_OF_MIB_VIEW variable bindings are exposed as errors for handling by the client.

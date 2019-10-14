@@ -120,7 +120,7 @@ struct SnmpConfig {
 /**
  *  ERROR_TYPE - Constants exposed to python for identifying where an error happened.
  */
-enum ERROR_TYPE {
+enum SNMP_ERROR_TYPE {
     SESSION_ERROR = 0,
     CREATE_REQUEST_PDU_ERROR,
     SEND_ERROR,
@@ -129,6 +129,7 @@ enum ERROR_TYPE {
     ASYNC_PROBE_ERROR,
     TRANSPORT_DISCONNECT_ERROR,
     CREATE_RESPONSE_PDU_ERROR,
+    VALUE_WARNING
 };
 
 
@@ -136,7 +137,7 @@ enum ERROR_TYPE {
  *  SnmpError - Pure C++ container for various error types exposed to python.
  */
 struct SnmpError {
-  ERROR_TYPE type;
+  SNMP_ERROR_TYPE type;
   host_t host;
   std::optional<int64_t> sys_errno;
   std::optional<int64_t> snmp_errno;
@@ -149,7 +150,7 @@ struct SnmpError {
    *  SnmpError - Constructor method with default values.
    */
   SnmpError(
-    ERROR_TYPE type,
+    SNMP_ERROR_TYPE type,
     host_t host,
     std::optional<int64_t> sys_errno = {},
     std::optional<int64_t> snmp_errno = {},
@@ -216,6 +217,9 @@ struct SnmpError {
         break;
       case CREATE_RESPONSE_PDU_ERROR:
         type_string = "CREATE_RESPONSE_PDU_ERROR";
+        break;
+      case VALUE_WARNING:
+        type_string = "VALUE_WARNING";
         break;
     };
 

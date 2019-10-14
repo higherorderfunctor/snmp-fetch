@@ -5,24 +5,25 @@ from typing import Optional, Sequence, Text, Tuple
 import numpy as np
 
 
-class ErrorType(type):
+class SnmpErrorType(type):
     """ErrorType stub."""
 
-    SESSION_ERROR: 'ErrorType'
-    CREATE_REQUEST_PDU_ERROR: 'ErrorType'
-    SEND_ERROR: 'ErrorType'
-    BAD_RESPONSE_PDU_ERROR: 'ErrorType'
-    TIMEOUT_ERROR: 'ErrorType'
-    ASYNC_PROBE_ERROR: 'ErrorType'
-    TRANSPORT_DISCONNECT_ERROR: 'ErrorType'
-    CREATE_RESPONSE_PDU_ERROR: 'ErrorType'
+    SESSION_ERROR: 'SnmpErrorType'
+    CREATE_REQUEST_PDU_ERROR: 'SnmpErrorType'
+    SEND_ERROR: 'SnmpErrorType'
+    BAD_RESPONSE_PDU_ERROR: 'SnmpErrorType'
+    TIMEOUT_ERROR: 'SnmpErrorType'
+    ASYNC_PROBE_ERROR: 'SnmpErrorType'
+    TRANSPORT_DISCONNECT_ERROR: 'SnmpErrorType'
+    CREATE_RESPONSE_PDU_ERROR: 'SnmpErrorType'
+    VALUE_WARNING: 'SnmpErrorType'
 
 
 class SnmpError:
     # pylint: disable=too-few-public-methods
     """SnmpError stub."""
 
-    type: ErrorType
+    type: SnmpErrorType
     host: Tuple[int, Text, Text]
     sys_errno: Optional[int]
     snmp_errno: Optional[int]
@@ -39,7 +40,7 @@ class SnmpError:
 
     def __init__(
             self,
-            type: ErrorType,
+            type: SnmpErrorType,
             host: Tuple[int, Text, Text],
             sys_errno: Optional[int] = ...,
             snmp_errno: Optional[int] = ...,

@@ -217,7 +217,7 @@ PYBIND11_MODULE(capi, m) {
     ));
 
   // expose error types to python
-  py::enum_<ERROR_TYPE>(m, "ErrorType")
+  py::enum_<SNMP_ERROR_TYPE>(m, "SnmpErrorType")
     .value("SESSION_ERROR", SESSION_ERROR)
     .value("CREATE_REQUEST_PDU_ERROR", CREATE_REQUEST_PDU_ERROR)
     .value("SEND_ERROR", SEND_ERROR)
@@ -226,6 +226,7 @@ PYBIND11_MODULE(capi, m) {
     .value("ASYNC_PROBE_ERROR", ASYNC_PROBE_ERROR)
     .value("TRANSPORT_DISCONNECT_ERROR", TRANSPORT_DISCONNECT_ERROR)
     .value("CREATE_RESPONSE_PDU_ERROR", CREATE_RESPONSE_PDU_ERROR)
+    .value("VALUE_WARNING", VALUE_WARNING)
     .export_values();
 
   // expose the SnmpError class to python
@@ -233,7 +234,7 @@ PYBIND11_MODULE(capi, m) {
     // init function with defaults
     .def(
         py::init<
-          ERROR_TYPE,
+          SNMP_ERROR_TYPE,
           host_t,
           std::optional<int64_t>,
           std::optional<int64_t>,
@@ -284,7 +285,7 @@ PYBIND11_MODULE(capi, m) {
       },
       [](py::tuple t) {
         return SnmpError(
-            t[0].cast<ERROR_TYPE>(),
+            t[0].cast<SNMP_ERROR_TYPE>(),
             t[1].cast<host_t>(),
             t[2].cast<std::optional<int64_t>>(),
             t[3].cast<std::optional<int64_t>>(),

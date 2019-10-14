@@ -147,7 +147,6 @@ class var_bind:
         df = pd.DataFrame.from_records(
             view.tolist(), columns=view.dtype.names
         )
-        df = df[~df['result_type#'].isin([128, 129, 130])]
         df = self.op(df)  # pylint: disable=not-callable
         df = df.drop(columns=({
             'oid#', 'oid_size#', 'result_size#', 'result_type#', 'index#',

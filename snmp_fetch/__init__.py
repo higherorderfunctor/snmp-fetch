@@ -1,7 +1,7 @@
 """Python wrapper to the C API."""
 
-from snmp_fetch.capi import ErrorType, PduType, SnmpConfig, SnmpError, fetch
+from snmp_fetch.capi import PduType, SnmpConfig, SnmpError, SnmpErrorType, fetch
 
 __all__ = [
-    'ErrorType', 'PduType', 'SnmpConfig', 'SnmpError', 'fetch'
+    'PduType', 'SnmpConfig', 'SnmpError', 'SnmpErrorType', 'fetch'
 ]

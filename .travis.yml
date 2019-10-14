@@ -1,8 +1,10 @@
 language: python
 python:
-  - "3.7"
-sudo: false
-cache: pip
+  - "3.7.4"
+cache:
+  pip: true
+  directories:
+    - net-snmp-5.8
 
 matrix:
   include:
@@ -19,19 +21,25 @@ matrix:
         - CXX=g++-8
       
 before_install:
+  - sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
   - sudo ln -s "/usr/bin/${CC}" /usr/local/bin/gcc
   - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
-  - wget https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz -O /tmp/boost.tar.gz
-  - tar -xvf /tmp/boost.tar.gz boost_1_70_0/boost
-  - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/boost_1_70_0/
-  - wget https://github.com/pybind/pybind11/archive/v2.3.0.tar.gz -O /tmp/pybind11.tar.gz
+  - wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz -O /tmp/boost.tar.gz
+  - tar -xvf /tmp/boost.tar.gz boost_1_71_0/boost
+  - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/boost_1_71_0/
+  - wget https://github.com/pybind/pybind11/archive/v2.4.2.tar.gz -O /tmp/pybind11.tar.gz
   - tar -xvf /tmp/pybind11.tar.gz
-  - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/pybind11-2.3.0/include/
-  - wget https://sourceforge.net/projects/net-snmp/files/net-snmp/5.8/net-snmp-5.8.tar.gz/download -O net-snmp.tar.gz
-  - tar xzfv net-snmp.tar.gz
+  - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/pybind11-2.4.2/include/
+  - if [ ! -d "net-snmp-5.8" ] || [ -z "$(ls net-snmp-5.8)" ]; then
+      wget https://sourceforge.net/projects/net-snmp/files/net-snmp/5.8/net-snmp-5.8.tar.gz/download -O net-snmp.tar.gz;
+      tar xzfv net-snmp.tar.gz;
+      pushd net-snmp-5.8;
+      ./configure --enable-ipv6 --with-defaults;
+      make;
+      popd;
+    fi
   - pushd net-snmp-5.8
-  - ./configure --enable-ipv6 --with-defaults
-  - make && sudo make install
+  - sudo make install
   - sudo ldconfig -v
   - popd
 
