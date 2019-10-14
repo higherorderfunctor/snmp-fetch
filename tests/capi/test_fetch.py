@@ -59,6 +59,7 @@ def test_no_such_instance(
         PduType.GET_REQUEST, hosts, [var_bind(oid='1')()]
     )
 
+    print(errors)
     assert len(results) == 1
     assert results[0].size == 0
     assert len(errors) == len(hosts)
@@ -82,6 +83,7 @@ def test_end_of_mib_view(
         PduType.BULKGET_REQUEST, hosts, [var_bind(oid='2.0')()], config
     )
 
+    print(errors)
     assert len(results) == 1
     assert results[0].size == 0
     assert len(errors) == len(hosts) * config.max_bulk_repetitions
