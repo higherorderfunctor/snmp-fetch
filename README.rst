@@ -133,14 +133,7 @@ Development
    poetry run pytest -x --ff tests
 
    # C++ testing (gcc)
-   mkdir testbuild && pushd testbuild
-   g++ -O0 -g -std=c++17 -Wall -fPIC -fprofile-arcs -ftest-coverage \
-     `python-config --includes --libs` \
-     tests/capi/test_main.cpp -o testcapi
-   ./testcapi
-   gcov test_main.cpp
-   popd
-   g++ -O0 -g -std=c++17 -Wall -fPIC \
+   g++ -std=c++17 -Wall -fPIC \
      `python-config --includes --libs` \
      tests/capi/test_capi.cpp -o test_capi
    ./test_capi
