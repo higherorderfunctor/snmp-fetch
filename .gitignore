@@ -1,3 +1,7 @@
+tests/capi/catch.cpp
+/test_capi*
+*.gcov
+
 ##
 # Source: https://github.com/github/gitignore/blob/master/Global/Vim.gitignore
 # Updated: 7/14/2019

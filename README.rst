@@ -95,7 +95,7 @@ Installation
 .. code:: console
 
    # poetry
-   poetry add snmp-fetch
+   poetry add snmp-fetch --no-dev
    # pip
    pip install snmp-fetch
 
@@ -104,35 +104,55 @@ Development
 
 .. code:: console
 
+   # add the testing framework
+   wget -P tests/capi https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
+
    # poetry must be installed
-   git clone ...
+   git clone https://github.com/higherorderfunctor/snmp-fetch.git
    cd snmp-fetch
+
+   # setup the virtual environment - mypy uses symbolic links in the 'stubs' directory to
+   # expose packages that play nicely with the static type checker
    virtualenv -p python3.7 ENV
    source ENV/bin/activate
    poetry install
    deactivate && source ENV/bin/activate  # refresh PATH
 
-   # fast fail testing
-   pytest --hypothesis-show-statistics -x --ff
-
-   # testing
-   coverage erase
-   pytest --cov --hypothesis-show-statistics
-   coverage html
-
-   # linting
+   # python linting
    poetry run pylint snmp_fetch tests
    poetry run flake8 snmp_fetch tests
    poetry run mypy -p snmp_fetch -p tests
    poetry run bandit -r snmp_fetch
-   poetry run pytest -v --cov --hypothesis-show-statistics tests/
+
+   # C++ linting
+   # TODO
+
+   # python testing
+   poetry run pytest -v --cov --hypothesis-show-statistics tests
+   # fail fast
+   poetry run pytest -x --ff tests
+
+   # C++ testing (gcc)
+   mkdir testbuild && pushd testbuild
+   g++ -O0 -g -std=c++17 -Wall -fPIC -fprofile-arcs -ftest-coverage \
+     `python-config --includes --libs` \
+     tests/capi/test_main.cpp -o testcapi
+   ./testcapi
+   gcov test_main.cpp
+   popd
+   g++ -O0 -g -std=c++17 -Wall -fPIC \
+     `python-config --includes --libs` \
+     tests/capi/test_capi.cpp -o test_capi
+   ./test_capi
+
+   # C++ testing (clang)
+   # TODO
 
    # clean up imports
    isort -rc --atomic .
 
 Known Limitations
-"""""""""""""""""
-
+"""""""""""""""
 - The library only supports SNMPv2 at this time.
 
 - `BULKGET_REQUEST` and `NEXT_REQUEST` will always perform a walk.
