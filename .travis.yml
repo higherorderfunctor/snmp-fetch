@@ -1,6 +1,7 @@
 language: python
 python:
   - "3.7.4"
+  - "3.8"
 cache:
   pip: true
   directories:
@@ -48,6 +49,7 @@ install:
   - pip install --upgrade pip
   - pip install poetry
   - poetry install -v
+  - pip install cpp-coveralls python-coveralls
 
 script:
   - poetry run pylint snmp_fetch tests
@@ -55,10 +57,9 @@ script:
   - poetry run mypy -p snmp_fetch -p tests
   - poetry run bandit -r snmp_fetch
   - poetry run pytest -v --cov --hypothesis-show-statistics tests/
-  - g++ -O0 -g -std=c++17 -Wall -fPIC -fprofile-arcs -ftest-coverage `python-config --includes --libs` tests/capi/test_capi.cpp -o test_capi
-  - ./test_capi
+  - g++ -std=c++17 `python-config --cflags` tests/capi/test_capi.cpp -O0 -fprofile-arcs -ftest-coverage -o test_capi `python-config --ldflags`
+  - LD_LIBRARY_PATH=$(python-config --ldflags | sed -E 's/.*-L([^ ]*).*/\1/') ./test_capi
 
 after_success:
-  - pip install cpp-coveralls python-coveralls
   - coveralls
   - cpp-coveralls -i src/capi 
