@@ -1,4 +1,4 @@
-tests/capi/catch.cpp
+tests/capi/catch.hpp
 /test_capi*
 *.gcov
 
