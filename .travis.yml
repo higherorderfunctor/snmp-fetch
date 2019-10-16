@@ -5,6 +5,7 @@ cache:
   pip: true
   directories:
     - net-snmp-5.8
+
 notifications:
   webhooks: https://coveralls.io/webhook
 
@@ -64,4 +65,4 @@ script:
 
 after_success:
   - coveralls
-  - cpp-coveralls --gcov="$(COV)" -i src/capi 
+  - cpp-coveralls --gcov="${COV}" -i src/capi 
