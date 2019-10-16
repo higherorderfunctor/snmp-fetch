@@ -9,6 +9,9 @@ cache:
 notifications:
   webhooks: https://coveralls.io/webhook
 
+env:
+  - COVERALLS_PARALLEL=true
+
 matrix:
   include:
     - os: linux
