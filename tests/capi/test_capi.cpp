@@ -4,6 +4,7 @@
 namespace py = pybind11;
 
 #include "catch.hpp"
+#include "test_fetch.hpp"
 #include "test_utils.hpp"
 
 int main( int argc, char* argv[] ) {

@@ -11,9 +11,16 @@ NETSNMP_LIBS = os.popen('net-snmp-config --libs').read()
 EXTENSIONS = [
     Extension(
         'snmp_fetch.capi', [
-            'src/capi/capimodule.cpp'
+            'src/capi/capimodule.cpp',
+            'src/capi/session.cpp',
+            'src/capi/asyncio.cpp',
+            'src/capi/results.cpp',
+            'src/capi/types.cpp',
+            'src/capi/utils.cpp',
+            'src/capi/debug.cpp',
         ],
         depends=[
+            'src/capi/capimodule.hpp',
             'src/capi/session.hpp',
             'src/capi/asyncio.hpp',
             'src/capi/results.hpp',

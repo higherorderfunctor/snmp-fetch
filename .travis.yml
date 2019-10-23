@@ -63,9 +63,9 @@ script:
   - poetry run mypy -p snmp_fetch -p tests
   - poetry run bandit -r snmp_fetch
   - poetry run pytest -v --cov --hypothesis-show-statistics tests/
-  - g++ -std=c++17 `python-config --cflags` tests/capi/test_capi.cpp -O0 -fprofile-arcs -ftest-coverage -o test_capi -L"$(python-config --prefix)/lib" `python-config --ldflags`
+  - g++ -std=c++17 `python-config --cflags` -O0 -fprofile-arcs -ftest-coverage src/capi/*.cpp tests/capi/test_capi.cpp -o test_capi -L"$(python-config --prefix)/lib" `python-config --ldflags` `net-snmp-config --libs`
   - LD_LIBRARY_PATH="$(python-config --prefix)/lib" ./test_capi
 
 after_success:
-  - coveralls
-  - cpp-coveralls --gcov="${COV}" -i src/capi 
+  - cpp-coveralls --gcov="${COV}" --gcov-options '\-lpr' -i src/capi --dump cpp-coveralls.json 
+  - coveralls --merge_file cpp-coveralls.json

@@ -1,6 +1,9 @@
-tests/capi/catch.hpp
-/test_capi*
+/tests/capi/catch.hpp
+/test_capi
 *.gcov
+*.gcda
+*.gcno
+/*-coveralls.json
 
 ##
 # Source: https://github.com/github/gitignore/blob/master/Global/Vim.gitignore
