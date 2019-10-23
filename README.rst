@@ -79,9 +79,9 @@ Pybind11 is a C++ wrapper around the Python C API to reduce boilerplate.  This i
    rm cmake-3.15.4-Linux-x86_64.sh
 
    # test and install pybind11
-   wget https://github.com/pybind/pybind11/archive/v2.4.2.tar.gz -O pybind11.tar.gz
+   wget https://github.com/pybind/pybind11/archive/v2.4.3.tar.gz -O pybind11.tar.gz
    tar -xvf pybind11.tar.gz
-   cd pybind11-2.4.2
+   cd pybind11-2.4.3
    mkdir -p build && cd build
    cmake .. -DPYBIND11_CPP_STANDARD=-std=c++17 -DDOWNLOAD_CATCH=1
    make check -j 4
@@ -95,52 +95,69 @@ Installation
 .. code:: console
 
    # poetry
-   poetry add snmp-fetch
+   poetry add snmp-fetch --no-dev
    # pip
    pip install snmp-fetch
 
 Development
 """""""""""
 
+`Poetry <https://poetry.eustace.io/>`_ is required for the development of snmp-fetch.
+
 .. code:: console
 
-   # poetry must be installed
-   git clone ...
+   # add the testing framework
+   wget -P tests/capi https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
+
+   # clone the repository
+   git clone https://github.com/higherorderfunctor/snmp-fetch.git
    cd snmp-fetch
+
+   # setup the virtual environment - mypy uses symbolic links in the 'stubs' directory to
+   # expose packages that play nicely with the static type checker
    virtualenv -p python3.7 ENV
    source ENV/bin/activate
    poetry install
-   deactivate && source ENV/bin/activate  # refresh PATH
 
-   # fast fail testing
-   pytest --hypothesis-show-statistics -x --ff
-
-   # testing
-   coverage erase
-   pytest --cov --hypothesis-show-statistics
-   coverage html
-
-   # linting
+   # python linting
+   poetry run isort -rc --atomic .
    poetry run pylint snmp_fetch tests
    poetry run flake8 snmp_fetch tests
    poetry run mypy -p snmp_fetch -p tests
    poetry run bandit -r snmp_fetch
-   poetry run pytest -v --cov --hypothesis-show-statistics tests/
 
-   # clean up imports
-   isort -rc --atomic .
+   # C++ linting
+   # TODO
+
+   # python testing
+   poetry run pytest -v --hypothesis-show-statistics tests
+   # fail fast testing
+   poetry run pytest -x --ff tests
+
+   # C++ testing (GCC)
+   g++ -std=c++17 `python-config --cflags` -O0 \
+     src/capi/*.cpp \
+     tests/capi/test_capi.cpp \
+     -o test_capi \
+     -L"$(python-config --prefix)/lib" \
+     `python-config --ldflags` \
+     `net-snmp-config --libs`
+   LD_LIBRARY_PATH="$(python-config --prefix)/lib" ./test_capi
+
+   # C++ testing (CLANG)
+   # TODO
+
 
 Known Limitations
 """""""""""""""""
-
 - The library only supports SNMPv2 at this time.
 
 - `BULKGET_REQUEST` and `NEXT_REQUEST` will always perform a walk.
 
-- Walks will always end if the root of the oid runs past the requested oid.
+- Walks will always end if the root of the OID runs past the requested OID.
 
 - Duplicate objects on the same host/request will be silently discarded.
 
-  - This includes the initial request; walks must be performed on an oid prior to the first desired.
+  - This includes the initial request; walks must be performed on an OID prior to the first desired.
 
-- NO_SUCH_INSTANCE, NO_SUCH_OBJECT, and END_OF_MIB_VIEW variable bindings are exposed as errors for handling by the client.
+- NO_SUCH_INSTANCE, NO_SUCH_OBJECT, and END_OF_MIB_VIEW response variable bindings are exposed as errors for handling by the client.

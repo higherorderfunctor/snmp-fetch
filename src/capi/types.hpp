@@ -58,6 +58,7 @@ enum PDU_TYPE {
  *  SnmpConfig - Pure C++ config type exposed through the to python module.
  */
 struct SnmpConfig {
+
   ssize_t retries;
   ssize_t timeout;
   size_t max_active_sessions;
@@ -73,47 +74,20 @@ struct SnmpConfig {
       size_t max_active_sessions = SNMP_FETCH__DEFAULT_MAX_ACTIVE_SESSIONS,
       size_t max_var_binds_per_pdu = SNMP_FETCH__DEFAULT_MAX_VAR_BINDS_PER_PDU,
       size_t max_bulk_repetitions = SNMP_FETCH__DEFAULT_MAX_BULK_REPETITIONS
-  ) {
-    this->retries = retries;
-    this->timeout = timeout;
-    this->max_active_sessions = max_active_sessions;
-    this->max_var_binds_per_pdu = max_var_binds_per_pdu;
-    this->max_bulk_repetitions = max_bulk_repetitions;
-  }
+  );
 
-  friend bool operator==(const SnmpConfig &a, const SnmpConfig &b) {
-    return (
-        (a.retries == b.retries) &
-        (a.timeout == b.timeout) &
-        (a.max_active_sessions == b.max_active_sessions) &
-        (a.max_var_binds_per_pdu == b.max_var_binds_per_pdu) &
-        (a.max_bulk_repetitions == b.max_bulk_repetitions)
-    );
-  }
+  /**
+   *  SnmpConfig::operator==
+   */
+  bool operator==(const SnmpConfig &a);
 
   /**
    *  to_string - String method used for __str__ and __repr__ which mimics attrs.
    *
    *  @return String representation of a SnmpConfig.
    */
-  std::string to_string() {
-    return str(
-        boost::format(
-          "SnmpConfig("
-          "retries=%1%, "
-          "timeout=%2%, "
-          "max_active_sessions=%3%, "
-          "max_var_binds_per_pdu=%4%, "
-          "max_bulk_repetitions=%5%"
-          ")"
-        )
-        % this->retries
-        % this->timeout
-        % this->max_active_sessions
-        % this->max_var_binds_per_pdu
-        % this->max_bulk_repetitions
-    );
-  }
+  std::string to_string();
+
 };
 
 
@@ -137,6 +111,7 @@ enum SNMP_ERROR_TYPE {
  *  SnmpError - Pure C++ container for various error types exposed to python.
  */
 struct SnmpError {
+
   SNMP_ERROR_TYPE type;
   host_t host;
   std::optional<int64_t> sys_errno;
@@ -158,101 +133,20 @@ struct SnmpError {
     std::optional<int64_t> err_index = {},
     std::optional<oid_t> err_oid = {},
     std::optional<std::string> message = {}
-  ) {
-    this->type = type;
-    this->host = std::make_tuple(
-        std::get<0>(host),
-        std::get<1>(host),
-        std::get<2>(host)
-    );
-    this->sys_errno = sys_errno;
-    this->snmp_errno = snmp_errno;
-    this->err_stat = err_stat;
-    this->err_index = err_index;
-    this->err_oid = err_oid;
-    this->message = message;
-  }
+  );
 
-  friend bool operator==(const SnmpError &a, const SnmpError &b) {
-    return (
-        (a.type == b.type) &
-        (a.host == b.host) &
-        (a.sys_errno == b.sys_errno) &
-        (a.snmp_errno == b.snmp_errno) &
-        (a.err_stat == b.err_stat) &
-        (a.err_index == b.err_index) &
-        (a.err_oid == b.err_oid) &
-        (a.message == b.message)
-    );
-  }
+  /**
+   *  SnmpError::operator==
+   */
+  bool operator==(const SnmpError &a);
 
   /**
    *  to_string - String method used for __str__ and __repr__ which mimics attrs.
    *
    *  @return String representation of an SnmpError.
    */
-  std::string to_string() {
-    std::string type_string = "UNKNOWN_ERROR";
-    switch (this->type) {
-      case SESSION_ERROR:
-        type_string = "SESSION_ERROR";
-        break;
-      case CREATE_REQUEST_PDU_ERROR:
-        type_string = "CREATE_REQUEST_PDU_ERROR";
-        break;
-      case SEND_ERROR:
-        type_string = "SEND_ERROR";
-        break;
-      case BAD_RESPONSE_PDU_ERROR:
-        type_string = "BAD_RESPONSE_PDU_ERROR";
-        break;
-      case TIMEOUT_ERROR:
-        type_string = "TIMEOUT_ERROR";
-        break;
-      case ASYNC_PROBE_ERROR:
-        type_string = "ASYNC_PROBE_ERROR";
-        break;
-      case TRANSPORT_DISCONNECT_ERROR:
-        type_string = "TRANSPORT_DISCONNECT_ERROR";
-        break;
-      case CREATE_RESPONSE_PDU_ERROR:
-        type_string = "CREATE_RESPONSE_PDU_ERROR";
-        break;
-      case VALUE_WARNING:
-        type_string = "VALUE_WARNING";
-        break;
-    };
+  std::string to_string();
 
-    return str(
-        boost::format(
-          "SnmpError("
-          "type=%1%, "
-          "Host(index=%2%, hostname='%3%', community='%4%'), "
-          "sys_errno=%5%, "
-          "snmp_errno=%6%, "
-          "err_stat=%7%, "
-          "err_index=%8%, "
-          "err_oid=%9%, "
-          "message=%10%"
-          ")"
-        )
-        % type_string
-        % std::to_string(std::get<0>(this->host))
-        % std::get<1>(this->host)
-        % std::get<2>(this->host)
-        % (this->sys_errno.has_value() ? std::to_string(*this->sys_errno) : "None")
-        % (this->snmp_errno.has_value() ? std::to_string(*this->snmp_errno) : "None")
-        % (this->err_stat.has_value() ? std::to_string(*this->err_stat) : "None")
-        % (this->err_index.has_value() ? std::to_string(*this->err_index) : "None")
-        % (
-          this->err_oid.has_value() ? "'" + oid_to_string(
-            (*this->err_oid).data(),
-            (*this->err_oid).size()
-          ) + "'" : "None"
-        )
-        % (this->message.has_value() ? "'" + *this->message + "'" : "None")
-    );
-  }
 };
 
 
