@@ -48,9 +48,9 @@ enum async_status_t {
  *  PDU_TYPE - Constants exposed to python.
  */
 enum PDU_TYPE {
-    GET_REQUEST = SNMP_MSG_GET,
-    NEXT_REQUEST = SNMP_MSG_GETNEXT,
-    BULKGET_REQUEST = SNMP_MSG_GETBULK,
+    GET = SNMP_MSG_GET,
+    NEXT= SNMP_MSG_GETNEXT,
+    BULKGET = SNMP_MSG_GETBULK,
 };
 
 

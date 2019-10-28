@@ -99,6 +99,21 @@ Installation
    # pip
    pip install snmp-fetch
 
+Examples
+""""""""
+
+The examples use jupyter and the dependencies can be installed using the following:
+
+.. code:: console
+
+   git clone https://github.com/higherorderfunctor/snmp-fetch.git
+   cd snmp_fetch
+   virtualenv -p python3.7 ENV
+   source ENV/bin/activate
+   poetry install
+   poetry install -E notebooks
+   jupyter lab
+
 Development
 """""""""""
 
@@ -150,6 +165,8 @@ Development
 
 Known Limitations
 """""""""""""""""
+- Changes between v0.1.x versions may introduce breaking changes.
+
 - The library only supports SNMPv2 at this time.
 
 - `BULKGET_REQUEST` and `NEXT_REQUEST` will always perform a walk.

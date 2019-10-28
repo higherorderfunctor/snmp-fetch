@@ -112,9 +112,9 @@ PYBIND11_MODULE(capi, m) {
 
   // expose PDU types to python
   py::enum_<PDU_TYPE>(m, "PduType")
-    .value("GET_REQUEST", GET_REQUEST)
-    .value("NEXT_REQUEST", NEXT_REQUEST)
-    .value("BULKGET_REQUEST", BULKGET_REQUEST)
+    .value("GET", GET)
+    .value("NEXT", NEXT)
+    .value("BULKGET", BULKGET)
     .export_values();
 
   // expose the SnmpConfig class to python

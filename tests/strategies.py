@@ -115,9 +115,9 @@ def dtype_struct() -> hypothesis.searchstrategy.strategies.SearchStrategy[Any]:
 def pdu_type() -> hypothesis.searchstrategy.strategies.SearchStrategy[PduType]:
     """Generate a PDU type."""
     return st.one_of([
-        st.just(PduType.GET_REQUEST),
-        st.just(PduType.NEXT_REQUEST),
-        st.just(PduType.BULKGET_REQUEST)
+        st.just(PduType.GET),
+        st.just(PduType.NEXT),
+        st.just(PduType.BULKGET)
     ])
 
 

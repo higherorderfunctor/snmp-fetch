@@ -8,7 +8,8 @@ import hypothesis.strategies as st
 import pytest
 
 import tests.strategies as _st
-from snmp_fetch import PduType, SnmpConfig, SnmpErrorType, fetch
+from snmp_fetch import PduType, SnmpConfig, SnmpErrorType
+from snmp_fetch.capi import fetch
 from snmp_fetch.utils import convert_oid
 from snmp_fetch.var_bind import var_bind
 from tests.fixtures import snmpsimd
@@ -56,7 +57,7 @@ def test_no_such_instance(
 ) -> None:
     """Test ambiguous root oids."""
     results, errors = fetch(
-        PduType.GET_REQUEST, hosts, [var_bind(oid='1')()]
+        PduType.GET, hosts, [var_bind(oid='1')()]
     )
 
     print(errors)
@@ -80,7 +81,7 @@ def test_end_of_mib_view(
     """Test ambiguous root oids."""
     config = SnmpConfig()
     results, errors = fetch(
-        PduType.BULKGET_REQUEST, hosts, [var_bind(oid='2.0')()], config
+        PduType.BULKGET, hosts, [var_bind(oid='2.0')()], config
     )
 
     print(errors)
