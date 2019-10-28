@@ -4,6 +4,8 @@
 *.gcda
 *.gcno
 /*-coveralls.json
+*/dask-worker-space/*
+
 
 ##
 # Source: https://github.com/github/gitignore/blob/master/Global/Vim.gitignore

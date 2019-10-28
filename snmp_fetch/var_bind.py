@@ -1,14 +1,14 @@
 """Variable bindings."""
 
 from operator import add
-from typing import Any, Callable, Optional, Sequence, Text, Tuple, Union
+from typing import Any, Callable, Optional, Sequence, Text, Tuple
 
 import attr
 import numpy as np
 import pandas as pd
 from toolz.functoolz import compose, identity
 
-from snmp_fetch import dtype
+from . import dtype
 from .fp import curry2
 from .fp.maybe import Maybe
 from .utils import convert_oid, validate_oid
@@ -66,11 +66,11 @@ class var_bind:
         )
 
     header_cstruct = np.dtype([
-        ('host_index', np.uint64),
-        ('oid_size#', np.uint64),
-        ('result_size#', np.uint64),
-        ('result_type#', np.uint64),
-        ('timestamp', 'datetime64[s]')
+        ('#index', np.uint64),
+        ('#oid_size', np.uint64),
+        ('#result_size', np.uint64),
+        ('#result_type', np.uint64),
+        ('#timestamp', 'datetime64[s]')
     ])
 
     def oid_cstruct(self) -> np.dtype:
@@ -80,7 +80,7 @@ class var_bind:
             self.oid
             .bind(lambda x: (
                 dtype.array(np.dtype(np.uint64), len(convert_oid(x)))
-                .fmap(lambda arr: np.dtype([('oid#', arr)]))
+                .fmap(lambda arr: np.dtype([('#oid', arr)]))
             ))
             .fail(AttributeError('oid has no dtype'))
         )
@@ -90,7 +90,7 @@ class var_bind:
         """Get the index cstruct with optional padding."""
         return(
             self.index
-            .fmap(lambda x: dtype.pad64(x, 'index#').throw() if pad else x)
+            .fmap(lambda x: dtype.pad64(x, '#ipadding').throw() if pad else x)
         )
 
     def data_cstruct(self, pad: bool = True) -> Maybe[np.dtype]:
@@ -98,7 +98,7 @@ class var_bind:
         """Get the data cstruct with optional padding."""
         return (
             self.data
-            .fmap(lambda x: dtype.pad64(x, 'data#').throw() if pad else x)
+            .fmap(lambda x: dtype.pad64(x, '#dpadding').throw() if pad else x)
         )
 
     def cstruct(self) -> np.dtype:
@@ -144,56 +144,13 @@ class var_bind:
         # pylint: disable=no-member
         """Convert a cstruct array to a dataframe."""
         view = arr.view(self.cstruct())
-        df = pd.DataFrame.from_records(
+        df = pd.DataFrame(
             view.tolist(), columns=view.dtype.names
         )
         df = self.op(df)  # pylint: disable=not-callable
         df = df.drop(columns=({
-            'oid#', 'oid_size#', 'result_size#', 'result_type#', 'index#',
-            'data#', 'mask'
+            '#index', '#oid_size', '#result_size', '#result_type', '#oid', '#timestamp',
+            '#ipadding', '#dpadding'
         }.intersection(df.columns)))
-        df['timestamp'] = df['timestamp'].dt.tz_localize('UTC')
+        df['#timestamp'] = df['#timestamp'].dt.tz_localize('UTC')
         return df
-
-
-def merge_results(
-        results: Sequence[np.ndarray], var_binds: Sequence[var_bind],
-        extras: Optional[Any] = None,
-        index: Union[Text, Sequence[Text]] = 'host_index'
-) -> Optional[Any]:
-    """Merge result variable bindings."""
-    df = None
-    for v, result in zip(var_binds, results):
-        if result.size == 0:
-            continue
-        _df = v.view(result)
-        if df is None:
-            df = _df
-        else:
-            df = df.merge(
-                _df, how='outer', left_index=True, right_index=True,
-                sort=True
-            )
-            # Hitting an issue when a row enters/leaves mid collection which
-            # results in an NaT in the timestamp column for the column missing
-            # row data on merge.  Running max with the NaT value causes the
-            # entire timestamp column to fill with NaN.  To avoid this, NaT's
-            # are filled with the max timestamp value in the respective column
-            # prior to getting the max value.
-            for tkey in ['timestamp_x', 'timestamp_y']:
-                df[tkey] = df[tkey].fillna(df[tkey].max())
-            df['timestamp'] = df[['timestamp_x', 'timestamp_y']].max(axis=1)
-            df = df.drop(columns=['timestamp_x', 'timestamp_y'])
-    if df is not None:
-        df = df.reset_index()
-        if extras is not None:
-            df = (
-                df.set_index(index)
-                .merge(
-                    extras.set_index(index), how='left', left_index=True,
-                    right_index=True
-                )
-                .reset_index()
-                .drop(columns='host_index')
-            )
-    return df

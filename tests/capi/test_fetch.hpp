@@ -17,7 +17,7 @@ TEST_CASE( "Test timeout", "[fetch]" ) {
   };
   SnmpConfig config;
 
-  auto [results, errors] = fetch(GET_REQUEST, hosts, var_binds, config);
+  auto [results, errors] = fetch(GET, hosts, var_binds, config);
 
   REQUIRE( results.size() == 1 );
   REQUIRE( results[0].size() == 0 );

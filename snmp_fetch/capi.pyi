@@ -57,9 +57,9 @@ class SnmpError:
 class PduType(type):
     """PduType stub."""
 
-    GET_REQUEST: 'PduType'
-    NEXT_REQUEST: 'PduType'
-    BULKGET_REQUEST: 'PduType'
+    GET: 'PduType'
+    NEXT: 'PduType'
+    BULKGET: 'PduType'
 
 
 class SnmpConfig:
