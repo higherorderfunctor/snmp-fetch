@@ -5,7 +5,6 @@ from typing import Any, Callable, Optional, Sequence, Text, Tuple
 
 import attr
 import numpy as np
-import pandas as pd
 from toolz.functoolz import compose, identity
 
 from . import dtype
@@ -139,18 +138,3 @@ class var_bind:
     ) -> Tuple[Sequence[int], Tuple[int, int]]:
         """Return a null variable binding cstruct with optional parameter."""
         return self.null_cstruct(param)
-
-    def view(self, arr: np.ndarray) -> Any:
-        # pylint: disable=no-member
-        """Convert a cstruct array to a dataframe."""
-        view = arr.view(self.cstruct())
-        df = pd.DataFrame(
-            view.tolist(), columns=view.dtype.names
-        )
-        df = self.op(df)  # pylint: disable=not-callable
-        df = df.drop(columns=({
-            '#index', '#oid_size', '#result_size', '#result_type', '#oid', '#timestamp',
-            '#ipadding', '#dpadding'
-        }.intersection(df.columns)))
-        df['#timestamp'] = df['#timestamp'].dt.tz_localize('UTC')
-        return df

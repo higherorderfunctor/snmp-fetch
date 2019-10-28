@@ -21,7 +21,11 @@ HOST_T = Tuple[int, Text, Text]  # pylint: disable=invalid-name
 def merge(a: Any, b: Any) -> Any:
     """Merge two DataFrame results."""
     df = pd.merge(a, b, how='outer', left_index=True, right_index=True)
-    df['#timestamp'] = df[['#timestamp_x', '#timestamp_y']].max(axis=1)
+    df['#timestamp'] = (
+        df[['#timestamp_x', '#timestamp_y']]
+        .max(axis=1)
+        .astype('datetime64[s]')
+    )
     return df.drop(columns=['#timestamp_x', '#timestamp_y'])
 
 
@@ -32,7 +36,7 @@ def prepare_column(arr: np.ndarray, vb: var_bind) -> Any:
         view.tolist(), columns=view.dtype.names
     )
     df = vb.op(df)
-    if not df.index.empty:
+    if not df.index.empty and not isinstance(df.index, pd.core.indexes.range.RangeIndex):
         df = df.reset_index().set_index(['#index', *df.index.names])
     else:
         df = df.set_index('#index')
@@ -66,10 +70,17 @@ def process_response(
     results_df = reduce(
         merge, [prepare_column(r, vb) for r, vb in zip(results, var_binds)]
     )
-    results_df = results_df.reset_index().set_index('#index').merge(
-        df.set_index('#index'), how='outer', left_index=True, right_index=True
+    results_df['#timestamp'] = results_df['#timestamp'].dt.tz_localize('UTC')
+    results_df = (
+        results_df.reset_index()
+        .set_index('#index')
+        .merge(
+            df.set_index('#index'), how='outer', left_index=True, right_index=True
+        )
+        .reset_index(drop=True)
+        .set_index(idx)
     )
-    return results_df.reset_index(drop=True).set_index(idx), errors
+    return results_df, errors
 
 
 def distribute(
