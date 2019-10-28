@@ -32,7 +32,7 @@ def prepare_column(arr: np.ndarray, vb: var_bind) -> Any:
         view.tolist(), columns=view.dtype.names
     )
     df = vb.op(df)
-    if not df.index.empty:
+    if not df.index.empty and not isinstance(df.index, pd.core.indexes.range.RangeIndex):
         df = df.reset_index().set_index(['#index', *df.index.names])
     else:
         df = df.set_index('#index')
