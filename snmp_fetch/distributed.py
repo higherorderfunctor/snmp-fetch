@@ -32,9 +32,10 @@ def prepare_column(arr: np.ndarray, vb: var_bind) -> Any:
         view.tolist(), columns=view.dtype.names
     )
     df = vb.op(df)
-    orig_idx = df.index.names
-    df = df.reset_index()
-    df = df.set_index(['#index', *orig_idx])
+    if not df.index.empty:
+        df = df.reset_index().set_index(['#index', *df.index.names])
+    else:
+        df = df.set_index('#index')
     df = df.drop(columns={
         '#oid_size', '#result_size', '#result_type', '#oid', '#ipadding', '#dpadding'
     }.intersection(df.columns))
@@ -107,7 +108,10 @@ def distribute(
         # mypy does not detect that closure of config is no longer optional
         return ((  # type: ignore
             pdu_type,
-            cast(Sequence[HOST_T], df[['#index', host_column, community_column]].values),
+            [
+                (i, str(h), c) for i, h, c
+                in df[['#index', host_column, community_column]].values
+            ],
             var_binds,
             config
         ), (
