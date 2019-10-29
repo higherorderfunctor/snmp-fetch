@@ -126,7 +126,7 @@ def oids() -> (
 ):
     """Generate integer oids."""
     return st.lists(
-        st.integers(min_value=0, max_value=2 ^ 64 - 1), min_size=1
+        st.integers(min_value=0, max_value=2 ^ 64 - 1), min_size=1, max_size=128
     )
 
 
