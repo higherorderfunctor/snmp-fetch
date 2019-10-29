@@ -1,12 +1,12 @@
 """Either test cases."""
 
-from typing import Any, Callable, Text, Tuple, TypeVar, cast, Union, Optional, Type
+from typing import Any, Callable, Optional, Text, Type, TypeVar, Union
 
+import hypothesis
+import hypothesis.strategies as st
 import pytest
 
 from snmp_fetch.fp.either import Either, Left, Right
-import hypothesis
-import hypothesis.strategies as st
 
 E = Exception
 
