@@ -3,10 +3,6 @@
 from functools import partial
 from typing import Any, Callable, Sequence, TypeVar
 
-from snmp_fetch.fp import either, maybe
-
-__all__ = ['either', 'maybe']
-
 A = TypeVar('A')
 B = TypeVar('B')
 C = TypeVar('C')

@@ -1,6 +1,6 @@
 """Maybe functor, applicative, and monad types."""
 
-from typing import Callable, Generic, TypeVar
+from typing import Callable, Generic, TypeVar, Union
 
 import attr
 
@@ -12,6 +12,8 @@ C = TypeVar('C')
 @attr.s(frozen=True, slots=True)
 class Either(Generic[A, B]):
     """Either sum type."""
+
+    value: Union[A, B]
 
     def __attrs_post_init__(self) -> None:
         # pylint: disable=no-self-use
@@ -28,7 +30,7 @@ class Either(Generic[A, B]):
             return Left(f.value)
         if isinstance(f, Right):
             return self.fmap(f.value)
-        raise TypeError()
+        raise TypeError("Expected f: 'Either[A, Callable[[B], C]]'")
 
     def bind(self, f: 'Callable[[B], Either[A, C]]') -> 'Either[A, C]':
         """Stub the monad bind operator."""
@@ -80,7 +82,7 @@ class Left(Generic[A, B], Either[A, B]):
 
     def throw(self) -> B:
         # pylint: disable=raising-non-exception
-        """Implement throw."""
+        """Throw a left."""
         if isinstance(self.value, Exception):
             raise self.value
         raise TypeError(f'{self.value} is not an exception.')
