@@ -35,8 +35,13 @@ def prepare_column(arr: np.ndarray, vb: VarBind) -> Any:
     df = pd.DataFrame.from_records(
         view.tolist(), columns=view.dtype.names
     )
-    df = vb.op(df)
-    if not df.index.empty and not isinstance(df.index, pd.core.indexes.range.RangeIndex):
+    # fixup dtypes on empty result set
+    if vb.header_cstruct.fields is not None:
+        for column, dtype in vb.header_cstruct.fields.items():
+            df[column] = df[column].astype(dtype[0])
+        df = vb.op(df)
+    # if not df.index.empty and not isinstance(df.index, pd.core.indexes.range.RangeIndex):
+    if df.index.names is not None:
         df = df.reset_index().set_index(['#index', *df.index.names])
     else:
         df = df.set_index('#index')

@@ -10,6 +10,7 @@ import numpy as np
 from toolz.functoolz import compose, identity
 
 from .fp import curry2
+from .fp.either import Either, Left, Right
 from .fp.maybe import Just, Maybe, Nothing
 
 DTYPE_FIELDS_T = (  # pylint: disable=invalid-name
@@ -70,21 +71,27 @@ def validate_oid(
     return convert_oid(convert_oid(oid))
 
 
+def get_fields(d: np.dtype) -> Either[Exception, DTYPE_FIELDS_T]:
+    """Get structured dtype fields safely."""
+    if d.fields is None:
+        return Left(ValueError(f'structured dtype required: {d}'))
+    return Right(d.fields)
+
+
 def dtype_concat(ds: Sequence[np.dtype]) -> np.dtype:
     """Concat structured datatypes."""
     def _concat(
             acc: Tuple[Mapping[Any, Any], int], a: np.dtype
     ) -> Tuple[DTYPE_FIELDS_T, int]:
         acc_fields, acc_itemsize = acc
-        if a.fields is None:
-            raise ValueError(f'structured dtype required: {a}')
-        intersection = set(acc_fields).intersection(set(a.fields))
+        fields = get_fields(a).throw()
+        intersection = set(acc_fields).intersection(set(fields))
         if intersection != set():
             raise ValueError(f'dtypes have overlapping fields: {intersection}')
         return (
             {
                 **acc_fields,
-                **{k: (d[0], d[1] + acc_itemsize) for k, d in a.fields.items()}
+                **{k: (d[0], d[1] + acc_itemsize) for k, d in fields.items()}
             },
             acc_itemsize + a.itemsize
         )
