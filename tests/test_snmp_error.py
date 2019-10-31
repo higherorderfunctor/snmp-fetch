@@ -11,7 +11,7 @@ from tests import strategies as _st
 
 
 @hypothesis.given(
-    _type=_st.error_type(),  # type: ignore
+    _type=_st.error_types(),  # type: ignore
     host_index=st.integers(min_value=0, max_value=(2 ** 64) - 1),
     hostname=st.text(),
     community=st.text()

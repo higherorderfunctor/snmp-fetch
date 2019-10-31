@@ -8,7 +8,7 @@ import pandas as pd
 
 from . import PduType, SnmpConfig, SnmpError
 from .capi import fetch as capi_fetch
-from .var_bind import var_bind
+from .var_bind import VarBind
 
 RESERVED_COL_NAMES = [
     '#oid_size', '#result_size', '#result_type', '#oid', '#ipadding', '#dpadding', '#timestamp',
@@ -29,7 +29,7 @@ def merge(a: Any, b: Any) -> Any:
     return df.drop(columns=['#timestamp_x', '#timestamp_y'])
 
 
-def prepare_column(arr: np.ndarray, vb: var_bind) -> Any:
+def prepare_column(arr: np.ndarray, vb: VarBind) -> Any:
     """Convert structured numpy array into DataFrame."""
     view = arr.view(vb.cstruct())
     df = pd.DataFrame.from_records(
@@ -49,7 +49,7 @@ def prepare_column(arr: np.ndarray, vb: var_bind) -> Any:
 def fetch(
         pdu_type: PduType,
         hosts: Sequence[HOST_T],
-        var_binds: Sequence[var_bind],
+        var_binds: Sequence[VarBind],
         config: SnmpConfig,
 ) -> Tuple[Sequence[np.ndarray], Sequence[SnmpError]]:
     """Wrap the C API versions of fetch."""
@@ -62,7 +62,7 @@ def fetch(
 
 
 def process_response(
-        df: Any, var_binds: Sequence[var_bind], idx: Sequence[Text],
+        df: Any, var_binds: Sequence[VarBind], idx: Sequence[Text],
         response: Tuple[Sequence[np.ndarray], Sequence[SnmpError]]
 ) -> Tuple[Any, Sequence[SnmpError]]:
     """Process SNMP response into a results DataFrame and errors list."""
@@ -86,13 +86,13 @@ def process_response(
 def distribute(
         pdu_type: PduType,
         df: Any,
-        var_binds: Sequence[var_bind],
+        var_binds: Sequence[VarBind],
         config: Optional[SnmpConfig] = None,
         batch_size: Optional[int] = None,
         **kwargs: Text
 ) -> Sequence[Tuple[
-    Tuple[PduType, Sequence[HOST_T], Sequence[var_bind], SnmpConfig],
-    Tuple[Any, Sequence[var_bind], Sequence[Text]]
+    Tuple[PduType, Sequence[HOST_T], Sequence[VarBind], SnmpConfig],
+    Tuple[Any, Sequence[VarBind], Sequence[Text]]
 ]]:
     """Fetch SNMP results and map to a DataFrame."""
     err_col_names = set([*df.index.names, *df.columns]).intersection(RESERVED_COL_NAMES)
@@ -113,8 +113,8 @@ def distribute(
     df = df.reset_index()
 
     def _prepare(df: Any) -> Tuple[
-            Tuple[PduType, Sequence[HOST_T], Sequence[var_bind], SnmpConfig],
-            Tuple[Any, Sequence[var_bind], Sequence[Text]]
+            Tuple[PduType, Sequence[HOST_T], Sequence[VarBind], SnmpConfig],
+            Tuple[Any, Sequence[VarBind], Sequence[Text]]
     ]:
         # mypy does not detect that closure of config is no longer optional
         return ((  # type: ignore

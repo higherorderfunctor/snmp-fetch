@@ -50,8 +50,8 @@ class Maybe(Generic[A]):
         """Stub to_optional."""
         raise NotImplementedError()
 
-    @classmethod
-    def from_optional(cls, a: 'Optional[A]') -> 'Maybe[A]':
+    @staticmethod
+    def from_optional(a: Optional[A]) -> 'Maybe[A]':
         """Return a maybe from an optional."""
         if a is None:
             return Nothing()

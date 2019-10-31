@@ -9,7 +9,7 @@ from snmp_fetch.capi import PduType, SnmpConfig, SnmpError, SnmpErrorType
 from .distributed import distribute
 from .distributed import fetch as dfetch
 from .distributed import process_response
-from .var_bind import var_bind
+from .var_bind import VarBind
 
 __all__ = [
     'PduType', 'SnmpConfig', 'SnmpError', 'SnmpErrorType'
@@ -19,7 +19,7 @@ __all__ = [
 def fetch(
         pdu_type: PduType,
         df: Any,
-        var_binds: Sequence[var_bind],
+        var_binds: Sequence[VarBind],
         config: Optional[SnmpConfig] = None,
         **kwargs: Text
 ) -> Tuple[Any, Sequence[SnmpError]]:

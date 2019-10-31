@@ -1,4 +1,4 @@
-"""DataFrame helper functions."""
+"""Composable DataFrame functions."""
 
 from typing import Any, Callable, Sequence, Text, Union
 
@@ -39,7 +39,7 @@ def to_timedelta(
 
 
 def to_oid_string(column: Text) -> Callable[[Any], Any]:
-    """Return a funct to convert to an OID string."""
+    """Return a function to convert an uint64 array to an OID string."""
     def _to_oid_string(df: Any) -> Any:
         if not df.empty:
             df[column] = (
