@@ -10,16 +10,15 @@ import pytest
 import tests.strategies as _st
 from snmp_fetch import PduType, SnmpConfig, SnmpErrorType
 from snmp_fetch.capi import fetch
-from snmp_fetch.utils import convert_oid
-from snmp_fetch.var_bind import var_bind
+from snmp_fetch.var_bind import VarBind, convert_oid
 from tests.fixtures import snmpsimd
 
 __all__ = ['snmpsimd']
 
 
 @hypothesis.given(
-    pdu_type=_st.pdu_type(),
-    hosts=_st.valid_hostnames(),  # type: ignore
+    pdu_type=_st.pdu_types(),
+    hosts=_st.valid_hosts(),  # type: ignore
     oids=st.lists(st.one_of([
         st.just((1, 3, 6, 1, 2, 1, 1, 3)),
         st.just((1, 3, 6, 1, 2, 1, 1, 3, 0))
@@ -36,7 +35,7 @@ def test_ambiguous_root_oids(
     """Test ambiguous root oids."""
     with pytest.raises(ValueError):
         vs = [
-            var_bind(
+            VarBind(
                 oid=convert_oid(oid)
             ) for oid in oids
         ]
@@ -47,7 +46,7 @@ def test_ambiguous_root_oids(
 
 
 @hypothesis.given(
-    hosts=_st.valid_hostnames()
+    hosts=_st.valid_hosts()
 )  # type: ignore
 @hypothesis.settings(
     deadline=None
@@ -57,7 +56,7 @@ def test_no_such_instance(
 ) -> None:
     """Test ambiguous root oids."""
     results, errors = fetch(
-        PduType.GET, hosts, [var_bind(oid='1')()]
+        PduType.GET, hosts, [VarBind(oid='1')()]
     )
 
     print(errors)
@@ -70,7 +69,7 @@ def test_no_such_instance(
 
 
 @hypothesis.given(
-    hosts=_st.valid_hostnames()
+    hosts=_st.valid_hosts()
 )  # type: ignore
 @hypothesis.settings(
     deadline=None
@@ -81,7 +80,7 @@ def test_end_of_mib_view(
     """Test ambiguous root oids."""
     config = SnmpConfig()
     results, errors = fetch(
-        PduType.BULKGET, hosts, [var_bind(oid='2.0')()], config
+        PduType.BULKGET, hosts, [VarBind(oid='2.0')()], config
     )
 
     print(errors)

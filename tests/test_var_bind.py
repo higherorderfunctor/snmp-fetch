@@ -8,8 +8,30 @@ import numpy as np
 import pytest
 
 from snmp_fetch.fp.maybe import Just, Nothing
-from snmp_fetch.var_bind import var_bind
+from snmp_fetch.var_bind import VarBind, validate_oid
 from tests import strategies as _st
+
+
+@hypothesis.given(
+    prefix=st.one_of(st.just(''), st.just('.')),  # type: ignore
+    oid=_st.oids()
+)
+def test_validate_oid(prefix: Text, oid: List[int]) -> None:
+    """Test validating an oid."""
+    assert validate_oid(oid) == oid
+    assert validate_oid(
+        prefix+'.'.join(map(str, oid))
+    ) == '.'+'.'.join(map(str, oid))
+    assert validate_oid(oid) == oid
+
+
+@hypothesis.given(
+    oid=_st.invalid_oids()  # type: ignore
+)
+def test_validate_invalid_oid(oid: Text) -> None:
+    """Test validating an invalid oid."""
+    with pytest.raises(ValueError):
+        validate_oid(oid)
 
 
 @hypothesis.given(
@@ -19,7 +41,7 @@ from tests import strategies as _st
 def test_oid_var_bind(prefix: Text, oid: List[int]) -> None:
     # pylint: disable=protected-access
     """Test oid only variable binding."""
-    v = var_bind(
+    v = VarBind(
         oid=prefix+'.'.join(map(str, oid))
     )
     assert v.oid == Just('.'+'.'.join(map(str, oid)))
@@ -28,24 +50,22 @@ def test_oid_var_bind(prefix: Text, oid: List[int]) -> None:
 
 
 @hypothesis.given(
-    oid=_st.bad_oids()  # type: ignore
+    oid=_st.invalid_oids()  # type: ignore
 )
 def test_oid_var_bind_with_invalid_input(oid) -> None:
-    # pylint: disable=protected-access
     """Test oid variable binding with invalid input."""
     with pytest.raises(ValueError):
-        var_bind(
+        VarBind(
             oid=oid
         )
 
 
 @hypothesis.given(
-    dtype=_st.dtype_struct()  # type: ignore
+    dtype=_st.dtype_structs()  # type: ignore
 )
 def test_index_var_bind(dtype) -> None:
-    # pylint: disable=protected-access, no-member
     """Test index variable binding."""
-    v = var_bind(
+    v = VarBind(
         index=np.dtype(dtype)
     )
     assert v.oid == Nothing()
@@ -54,12 +74,11 @@ def test_index_var_bind(dtype) -> None:
 
 
 @hypothesis.given(
-    dtype=_st.dtype_struct()  # type: ignore
+    dtype=_st.dtype_structs()  # type: ignore
 )
 def test_data_var_bind(dtype) -> None:
-    # pylint: disable=protected-access, no-member
     """Test data variable binding."""
-    v = var_bind(
+    v = VarBind(
         data=np.dtype(dtype)
     )
     assert v.oid == Nothing()
