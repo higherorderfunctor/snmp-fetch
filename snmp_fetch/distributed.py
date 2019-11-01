@@ -41,7 +41,7 @@ def prepare_column(arr: np.ndarray, vb: VarBind) -> Any:
             df[column] = df[column].astype(dtype[0])
         df = vb.op(df)
     # if not df.index.empty and not isinstance(df.index, pd.core.indexes.range.RangeIndex):
-    if df.index.names is not None:
+    if df.index.names is not None and [i for i in df.index.names if i is not None]:
         df = df.reset_index().set_index(['#index', *df.index.names])
     else:
         df = df.set_index('#index')
