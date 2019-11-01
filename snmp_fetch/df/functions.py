@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from .types.inet_address import IPV4_PREFIX_LOOKUP_TABLE, IPV6_PREFIX_LOOKUP_TABLE, IpNetwork, ip
+from .utils import bytes_to_int
 
 
 def set_index(columns: Union[Text, List[Text]]) -> Callable[[Any], Any]:
@@ -44,6 +45,13 @@ def to_timedelta(
     return _to_timedelta
 
 
+def drop(**kwargs: Any) -> Any:
+    """Return a composable function to drop data from a DataFrame."""
+    def _drop(df: Any) -> Any:
+        return df.drop(**kwargs)
+    return _drop
+
+
 def to_oid_string(column: Text, size_col: Optional[Text] = '#result_size') -> Callable[[Any], Any]:
     """Return a composable function to convert an uint64 array to an OID string."""
     def _to_oid_string(df: Any) -> Any:
@@ -62,11 +70,20 @@ def to_oid_string(column: Text, size_col: Optional[Text] = '#result_size') -> Ca
     return _to_oid_string
 
 
-def drop(**kwargs: Any) -> Any:
-    """Return a composable function to drop data from a DataFrame."""
-    def _drop(df: Any) -> Any:
-        return df.drop(**kwargs)
-    return _drop
+def to_ipv4_address(column: Text) -> Callable[[Any], Any]:
+    """Return a composable function to convert a numpy array to an IPv4Address."""
+    def _to_ipv4_address(df: Any) -> Any:
+        df[column] = df[column].apply(lambda x: ip.IPv4Address(bytes_to_int(x)))
+        return df
+    return _to_ipv4_address
+
+
+def to_ipv6_address(column: Text) -> Callable[[Any], Any]:
+    """Return a composable function to convert a numpy array to an IPv6Address."""
+    def _to_ipv6_address(df: Any) -> Any:
+        df[column] = df[column].apply(lambda x: ip.IPv6Address(bytes_to_int(x)))
+        return df
+    return _to_ipv6_address
 
 
 def to_cidr_address(

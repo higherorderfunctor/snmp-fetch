@@ -5,6 +5,7 @@ from typing import Any, Callable, List, Optional, Text, Tuple, Union
 import numpy as np
 
 from .types.inet_address import IpAddress, ip
+from .utils import bytes_to_int
 
 EXTRACT_T = Callable[[Any, Text], Tuple[Any, np.ndarray]]  # pylint: disable=invalid-name
 COLUMNS_T = Union[Text, List[Text]]  # pylint: disable=invalid-name
@@ -59,34 +60,32 @@ def object_identifier(df: Any, source: Text) -> Tuple[np.ndarray, np.ndarray]:
     return df[source][1:int(df[source][0])+1], df[source][int(df[source][0])+1:]
 
 
-def ip_address(
+def inet_address(
         df: Any, source: Text, default_zone: Optional[Any] = None
 ) -> Tuple[IpAddress, Any, np.ndarray]:
-    """Extract an inet address with leading address size."""
-    def to_int(x: np.ndarray) -> int:
-        return int.from_bytes(x.astype(np.uint8).tobytes(), byteorder='big')
+    """Extract an inet address with leading address size and possible zone."""
     if df[source][0] == 4:
         return (
-            ip.IPv4Address(to_int(df[source][1:5])),
+            ip.IPv4Address(bytes_to_int(df[source][1:5])),
             default_zone,
             df[source][5:]
         )
     if df[source][0] == 16:
         return (
-            ip.IPv6Address(to_int(df[source][1:17])),
+            ip.IPv6Address(bytes_to_int(df[source][1:17])),
             default_zone,
             df[source][17:]
         )
     if df[source][0] == 8:
         return (
-            ip.IPv4Address(to_int(df[source][1:9])),
-            to_int(df[source][9:13]),
+            ip.IPv4Address(bytes_to_int(df[source][1:9])),
+            bytes_to_int(df[source][9:13]),
             df[source][13:]
         )
     if df[source][0] == 20:
         return (
-            ip.IPv6Address(to_int(df[source][1:17])),
-            to_int(df[source][17:21]),
+            ip.IPv6Address(bytes_to_int(df[source][1:17])),
+            bytes_to_int(df[source][17:21]),
             df[source][21:]
         )
     raise TypeError('Datatype not understood')
