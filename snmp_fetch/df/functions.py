@@ -108,6 +108,9 @@ def to_cidr_address(
         return cast(IpNetwork, ip.ip_network((addr, prefix), **kwargs))
 
     def _to_cidr_address(df: Any) -> Any:
-        df[column] = df[[ip_address, mask_or_prefix]].apply(_ip_network, axis=1)
+        if df.empty:
+            df[column] = None
+        else:
+            df[column] = df[[ip_address, mask_or_prefix]].apply(_ip_network, axis=1)
         return df
     return _to_cidr_address

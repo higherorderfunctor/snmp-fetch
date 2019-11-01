@@ -55,7 +55,7 @@ def fetch(
         pdu_type: PduType,
         hosts: Sequence[HOST_T],
         var_binds: Sequence[VarBind],
-        config: SnmpConfig,
+        config: SnmpConfig
 ) -> Tuple[Sequence[np.ndarray], Sequence[SnmpError]]:
     """Wrap the C API versions of fetch."""
     return capi_fetch(
