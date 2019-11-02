@@ -121,6 +121,8 @@ Development
 
 .. code:: console
 
+   # git submodule update --init
+
    # add the testing framework
    wget -P tests/capi https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
 
