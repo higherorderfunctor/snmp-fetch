@@ -4,13 +4,7 @@ python:
 cache:
   pip: true
   directories:
-    - net-snmp-5.8
-
-notifications:
-  webhooks: https://coveralls.io/webhook
-
-env:
-  - COVERALLS_PARALLEL=true
+    - build
 
 matrix:
   include:
@@ -31,25 +25,6 @@ before_install:
   - sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
   - sudo ln -s "/usr/bin/${CC}" /usr/local/bin/gcc
   - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
-  - wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz -O /tmp/boost.tar.gz
-  - tar -xvf /tmp/boost.tar.gz boost_1_71_0/boost
-  - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/boost_1_71_0/
-  - wget https://github.com/pybind/pybind11/archive/v2.4.3.tar.gz -O /tmp/pybind11.tar.gz
-  - tar -xvf /tmp/pybind11.tar.gz
-  - export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$PWD/pybind11-2.4.3/include/
-  - if [ ! -d "net-snmp-5.8" ] || [ -z "$(ls net-snmp-5.8)" ]; then
-      wget https://sourceforge.net/projects/net-snmp/files/net-snmp/5.8/net-snmp-5.8.tar.gz/download -O net-snmp.tar.gz;
-      tar xzfv net-snmp.tar.gz;
-      pushd net-snmp-5.8;
-      ./configure --enable-ipv6 --with-defaults;
-      make;
-      popd;
-    fi
-  - pushd net-snmp-5.8
-  - sudo make install
-  - sudo ldconfig -v
-  - popd
-  - wget -P tests/capi https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
 
 install:
   - pip install --upgrade pip
@@ -63,9 +38,3 @@ script:
   - poetry run mypy -p snmp_fetch -p tests
   - poetry run bandit -r snmp_fetch
   - poetry run pytest -v --cov --hypothesis-show-statistics tests/
-  - g++ -std=c++17 `python-config --cflags` -O0 -fprofile-arcs -ftest-coverage src/capi/*.cpp tests/capi/test_capi.cpp -o test_capi -L"$(python-config --prefix)/lib" `python-config --ldflags` `net-snmp-config --libs`
-  - LD_LIBRARY_PATH="$(python-config --prefix)/lib" ./test_capi
-
-after_success:
-  - cpp-coveralls --gcov="${COV}" --gcov-options '\-lpr' -i src/capi --dump cpp-coveralls.json 
-  - coveralls --merge_file cpp-coveralls.json
