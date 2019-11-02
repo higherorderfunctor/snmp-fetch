@@ -149,7 +149,8 @@ Development
    # fail fast testing
    poetry run pytest -x --ff tests
 
-   # C++ testing (GCC)
+   # C++ testing (GCC) 
+   wget -P tests/capi https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
    g++ -std=c++17 `python-config --cflags` -O0 \
      src/capi/*.cpp \
      tests/capi/test_capi.cpp \
