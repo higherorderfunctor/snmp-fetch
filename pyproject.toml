@@ -10,7 +10,7 @@ repository = "https://pypi.org/project/snmp-fetch/"
 
 build = "build.py"
 
-include = ["src/capi/*"]
+include = ["src*"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
