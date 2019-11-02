@@ -2,7 +2,3 @@
 	path = lib/pybind11
 	url = https://github.com/pybind/pybind11.git
     branch = v2.4.3
-[submodule "net-snmp-code"]
-	path = lib/net-snmp
-	url = https://git.code.sf.net/p/net-snmp/code
-    branch = v5.8
