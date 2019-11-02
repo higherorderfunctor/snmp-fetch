@@ -121,6 +121,7 @@ Development
 
 .. code:: console
 
+   # xport CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include"
    # git submodule update --init
 
    # add the testing framework
