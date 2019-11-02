@@ -48,5 +48,5 @@ script:
   - popd
 
 after_success:
-  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86.64-3.7 --gcov-options '\-lpr' -i src/capi --dump cpp-coveralls.json 
+  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-3.7 --gcov-options '\-lpr' -i src/capi --dump cpp-coveralls.json 
   - coveralls --merge_file cpp-coveralls.json

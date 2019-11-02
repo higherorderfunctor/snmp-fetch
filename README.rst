@@ -48,7 +48,6 @@ The examples use jupyter and the dependencies can be installed using the followi
    cd snmp_fetch
    virtualenv -p python3.7 ENV
    source ENV/bin/activate
-   poetry install
    poetry install -E notebooks
    jupyter lab
 
@@ -59,14 +58,7 @@ Development
 
 .. code:: console
 
-   # xport CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include"
-   # git submodule update --init
-
-   # add the testing framework
-   wget -P tests/capi https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
-
-   # clone the repository
-   git clone https://github.com/higherorderfunctor/snmp-fetch.git
+   git clone --recurse-submodules -j8 https://github.com/higherorderfunctor/snmp-fetch.git
    cd snmp-fetch
 
    # setup the virtual environment - mypy uses symbolic links in the 'stubs' directory to
@@ -74,6 +66,11 @@ Development
    virtualenv -p python3.7 ENV
    source ENV/bin/activate
    poetry install
+
+.. code:: console
+
+   # C++ headers are in the following folders for linters
+   export CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include:lib/Catch2/single_include/catch2"
 
    # python linting
    poetry run isort -rc --atomic .
@@ -90,19 +87,9 @@ Development
    # fail fast testing
    poetry run pytest -x --ff tests
 
-   # C++ testing (GCC) 
-   wget -P tests/capi https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
-   g++ -std=c++17 `python-config --cflags` -O0 \
-     src/capi/*.cpp \
-     tests/capi/test_capi.cpp \
-     -o test_capi \
-     -L"$(python-config --prefix)/lib" \
-     `python-config --ldflags` \
-     `net-snmp-config --libs`
-   LD_LIBRARY_PATH="$(python-config --prefix)/lib" ./test_capi
-
-   # C++ testing (CLANG)
-   # TODO
+   # C++ testing
+   cd build/temp.linux-x86_64-3.7/
+   cmake ../.. && make test_capi test
 
 
 Known Limitations
