@@ -18,12 +18,14 @@ ExternalProject_Add(netsnmp
   UPDATE_COMMAND ""
 )
 
-# get and install boost headers
+# get and install boost
 ExternalProject_Add(boost
-  URL https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory boost ${CMAKE_BINARY_DIR}/include/boost
+  GIT_REPOSITORY https://github.com/boostorg/boost.git
+  GIT_TAG boost-1.71.0
+  GIT_SHALLOW 1
+  CONFIGURE_COMMAND ./bootstrap.sh --prefix=${CMAKE_BINARY_DIR} --without-libraries=python
+  BUILD_COMMAND "./b2"
+  INSTALL_COMMAND ./b2 install
   BUILD_IN_SOURCE 1
   UPDATE_COMMAND ""
 )
