@@ -14,8 +14,15 @@ ExternalProject_Add(
   BUILD_IN_SOURCE 1
 )
 
-add_subdirectory(lib/pybind11)
+SET(NETSNMP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/net-snmp/include)
+SET(NETSNMP_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/net-snmp/lib)
 
+add_library(NetSnmp SHARED IMPORTED)
+set_target_properties(NetSnmp PROPERTIES IMPORTED_LOCATION ${NETSNMP_LIB_DIR}/libnetsnmp.so)
+
+include_directories(${NETSNMP_INCLUDE_DIR})
+
+add_subdirectory(lib/pybind11)
 pybind11_add_module(
   capi
   src/capi/capimodule.cpp
@@ -26,3 +33,6 @@ pybind11_add_module(
   src/capi/types.cpp
   src/capi/utils.cpp
 )
+
+target_link_libraries(capi PRIVATE NetSnmp)
+add_dependencies(capi netsnmp)
