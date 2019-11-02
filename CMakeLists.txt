@@ -57,39 +57,43 @@ add_dependencies(capi
   boost
 )
 
-# testing
-enable_testing()
+if(BUILD_TESTING)
 
-# add Catch2 for testing
-set(CATCH_SOURCE_DIR ${PROJECT_SOURCE_DIR}/lib/Catch2)
-add_subdirectory(${CATCH_SOURCE_DIR})
-include_directories(${CATCH_SOURCE_DIR}/single_include/catch2)
+  # testing
+  enable_testing()
 
-# define the test application
-add_executable(test_capi EXCLUDE_FROM_ALL
-  tests/capi/test_capi.cpp
-  src/capi/capimodule.cpp
-  src/capi/asyncio.cpp
-  src/capi/debug.cpp
-  src/capi/results.cpp
-  src/capi/session.cpp
-  src/capi/types.cpp
-  src/capi/utils.cpp
-)
+  # add Catch2 for testing
+  set(CATCH_SOURCE_DIR ${PROJECT_SOURCE_DIR}/lib/Catch2)
+  add_subdirectory(${CATCH_SOURCE_DIR})
+  include_directories(${CATCH_SOURCE_DIR}/single_include/catch2)
 
-# add compiler options
-target_compile_options(test_capi PRIVATE -O0 -fprofile-arcs -ftest-coverage)
+  # define the test application
+  add_executable(test_capi EXCLUDE_FROM_ALL
+    tests/capi/test_capi.cpp
+    src/capi/capimodule.cpp
+    src/capi/asyncio.cpp
+    src/capi/debug.cpp
+    src/capi/results.cpp
+    src/capi/session.cpp
+    src/capi/types.cpp
+    src/capi/utils.cpp
+  )
 
-# define test dependencies
-add_dependencies(test_capi
-  netsnmp
-  boost
-)
+  # add compiler options
+  target_compile_options(test_capi PRIVATE -O0 -fprofile-arcs -ftest-coverage)
 
-# add test libraries to the test application
-target_link_libraries(test_capi PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov)
+  # define test dependencies
+  add_dependencies(test_capi
+    netsnmp
+    boost
+  )
 
-# add the test cases to CTest
-include(CTest)
-include(${CATCH_SOURCE_DIR}/contrib/Catch.cmake)
-catch_discover_tests(test_capi)
+  # add test libraries to the test application
+  target_link_libraries(test_capi PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov)
+
+  # add the test cases to CTest
+  include(CTest)
+  include(${CATCH_SOURCE_DIR}/contrib/Catch.cmake)
+  catch_discover_tests(test_capi)
+
+endif()

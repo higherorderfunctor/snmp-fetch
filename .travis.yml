@@ -34,7 +34,11 @@ before_install:
 install:
   - pip install --upgrade pip
   - pip install poetry
-  - poetry install -v
+  - mkdir -p build/temp.linux-x86_64-3.7
+  - pushd build/temp.linux-x86_64-3.7
+  - cmake ../.. && make all && make test_capi  # force build output hidden by poetry
+  - popd
+  - poetry install -vvv
   - pip install cpp-coveralls python-coveralls
 
 script:
