@@ -15,7 +15,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-8
-            - libperl-dev
       env:
         - CC=gcc-8
         - CXX=g++-8
