@@ -6,6 +6,12 @@ cache:
   directories:
     - build
 
+notifications:
+  webhooks: https://coveralls.io/webhook
+
+env:
+  - COVERALLS_PARALLEL=true
+
 matrix:
   include:
     - os: linux
@@ -37,3 +43,10 @@ script:
   - poetry run mypy -p snmp_fetch -p tests
   - poetry run bandit -r snmp_fetch
   - poetry run pytest -v --cov --hypothesis-show-statistics tests/
+  - pushd build/temp.linux-x86_64-3.7/
+  - cmake ../.. && make test_capi test
+  - popd
+
+after_success:
+  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86.64-3.7 --gcov-options '\-lpr' -i src/capi --dump cpp-coveralls.json 
+  - coveralls --merge_file cpp-coveralls.json
