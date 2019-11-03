@@ -2,17 +2,27 @@ cmake_minimum_required(VERSION 3.12.4)
 project(snmp_fetch)
 
 include(ExternalProject)
+include(ProcessorCount)
 
 set(CMAKE_CXX_STANDARD 17)
 set(PYBIND11_CPP_STANDARD -std=c++17)
-
 include_directories(${CMAKE_BINARY_DIR}/include)
+
+# increase install speed with parallel builds
+ProcessorCount(N)
+if(NOT N EQUAL 0)
+  SET(GIT_CONFIG submodule.fetchJobs=${N})
+  set(MAKEFLAGS -j${N})
+  set(CTEST_BUILD_FLAGS -j${N})
+  set(ctest_test_args ${ctest_test_args} PARALLEL_LEVEL ${N})
+endif()
 
 # get, build, and install net-snmp
 ExternalProject_Add(netsnmp
   GIT_REPOSITORY https://git.code.sf.net/p/net-snmp/code
   GIT_TAG v5.8
   GIT_SHALLOW 1
+  GIT_CONFIG ${GIT_CONFIG}
   CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-mibs --disable-mib-loading --disable-applications --disable-scripts --disable-manuals --disable-embedded-perl --without-perl-modules
   BUILD_IN_SOURCE 1
   UPDATE_COMMAND ""
@@ -23,9 +33,10 @@ ExternalProject_Add(boost
   GIT_REPOSITORY https://github.com/boostorg/boost.git
   GIT_TAG boost-1.71.0
   GIT_SHALLOW 1
-  CONFIGURE_COMMAND ./bootstrap.sh --prefix=${CMAKE_BINARY_DIR} --without-libraries=python
-  BUILD_COMMAND "./b2"
-  INSTALL_COMMAND ./b2 install
+  GIT_CONFIG ${GIT_CONFIG}
+  CONFIGURE_COMMAND ./bootstrap.sh --prefix=${CMAKE_BINARY_DIR}
+  BUILD_COMMAND ./b2 headers
+  INSTALL_COMMAND cmake -E copy_directory boost ${CMAKE_BINARY_DIR}/include/boost
   BUILD_IN_SOURCE 1
   UPDATE_COMMAND ""
 )

@@ -25,7 +25,10 @@ An opinionated python3.7 SNMPv2 package designed for rapid database ingestion.  
 Prerequisites
 """""""""""""
 
-Snmp-fetch requires python 3.7, a c++17 compiler (currently only supports gcc-8), and cmake 3.12.4+.  No other user installed dependencies should be required for building this package.  Installation may take some time as the cmake script will download and build pybind11, boost, and a light-weight configured version of net-snmp within the package.
+Snmp-fetch requires python 3.7, a c++17 compiler (currently only supports gcc-8), and cmake 3.12.4+.  No other user installed dependencies should be required for building this package.
+
+.. ATTENTION::
+   Installation can take awhile as the install script will download and install pybind11, boost, and a light-weight configured version of net-snmp within the package.
 
 Installation
 """"""""""""
@@ -93,8 +96,9 @@ Development
    poetry run pytest -x --ff tests
 
    # C++ testing
-   cd build/temp.linux-x86_64-3.7/
-   cmake ../.. && make test_capi test
+   pushd build/temp.linux-x86_64-3.7/
+   cmake -DBUILD_TESTING=ON ../.. && make test_capi test
+   popd
 
 
 Known Limitations
