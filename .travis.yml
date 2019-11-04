@@ -3,8 +3,6 @@ python:
   - "3.7.4"
 cache:
   pip: true
-  directories:
-    - build
 
 notifications:
   webhooks: https://coveralls.io/webhook
@@ -46,8 +44,8 @@ script:
   - poetry run flake8 snmp_fetch tests
   - poetry run mypy -p snmp_fetch -p tests
   - poetry run bandit -r snmp_fetch
-  - poetry run pytest -v --cov --hypothesis-show-statistics tests/
-  - pushd build/temp.linux-x86_64-3.7/
+  - poetry run pytest -v --cov --hypothesis-show-statistics tests
+  - pushd build/temp.linux-x86_64-3.7
   - make test  # run C++ tests
   - popd
 
