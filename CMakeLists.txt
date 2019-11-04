@@ -25,7 +25,7 @@ ExternalProject_Add(netsnmp
   GIT_CONFIG ${GIT_CONFIG}
   CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules
   BUILD_COMMAND cd snmplib && ${CMAKE_MAKE_PROGRAM}
-  INSTALL_COMMAND cd snmplib && ${CMAKE_MAKE_PROGRAM} install
+  INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} installlocalheaders && cd snmplib && ${CMAKE_MAKE_PROGRAM} install
   BUILD_IN_SOURCE 1
   UPDATE_COMMAND ""
 )
