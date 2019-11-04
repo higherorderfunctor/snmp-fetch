@@ -4,14 +4,17 @@ project(snmp_fetch)
 include(ExternalProject)
 include(ProcessorCount)
 
+find_package(OpenSSL REQUIRED)
+
 set(CMAKE_CXX_STANDARD 17)
 set(PYBIND11_CPP_STANDARD -std=c++17)
+
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 # increase install speed with parallel builds
 ProcessorCount(N)
 if(NOT N EQUAL 0)
-  SET(GIT_CONFIG submodule.fetchJobs=${N})
+  set(GIT_CONFIG submodule.fetchJobs=${N})
   set(MAKEFLAGS -j${N})
   set(CTEST_BUILD_FLAGS -j${N})
   set(ctest_test_args ${ctest_test_args} PARALLEL_LEVEL ${N})
@@ -23,8 +26,10 @@ ExternalProject_Add(netsnmp
   GIT_TAG v5.8
   GIT_SHALLOW 1
   GIT_CONFIG ${GIT_CONFIG}
-  CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules
-  BUILD_COMMAND cd snmplib && ${CMAKE_MAKE_PROGRAM}
+  CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+  CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules --enable-static --disable-shared --with-pic --with-ldflags=-Bstatic
+  BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} snmplib
   INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} installlocalheaders && cd snmplib && ${CMAKE_MAKE_PROGRAM} install
   BUILD_IN_SOURCE 1
   UPDATE_COMMAND ""
@@ -47,8 +52,11 @@ ExternalProject_Add(boost
 add_subdirectory(lib/pybind11)
 
 # define the net-snmp library
-add_library(libnetsnmp SHARED IMPORTED)
-set_target_properties(libnetsnmp PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libnetsnmp.so)
+add_library(libnetsnmp STATIC IMPORTED)
+set_target_properties(libnetsnmp PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+  IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libnetsnmp${CMAKE_STATIC_LIBRARY_SUFFIX}
+)
 
 # define the python module
 pybind11_add_module(capi
@@ -62,7 +70,9 @@ pybind11_add_module(capi
 )
 
 # add the net-snmp library to the python module
-target_link_libraries(capi PRIVATE libnetsnmp)
+target_link_libraries(capi
+    PRIVATE libnetsnmp OpenSSL::Crypto
+)
 
 # define dependencies
 add_dependencies(capi
@@ -102,7 +112,9 @@ if(BUILD_TESTING)
   )
 
   # add test libraries to the test application
-  target_link_libraries(test_capi PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov)
+  target_link_libraries(test_capi
+    PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov OpenSSL::Crypto
+  )
 
   # add the test cases to CTest
   include(CTest)
