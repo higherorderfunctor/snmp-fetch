@@ -3,8 +3,6 @@ python:
   - "3.7.4"
 cache:
   pip: true
-  directories:
-    - build
 
 notifications:
   webhooks: https://coveralls.io/webhook
