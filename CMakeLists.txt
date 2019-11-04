@@ -54,8 +54,8 @@ add_subdirectory(lib/pybind11)
 # define the net-snmp library
 add_library(libnetsnmp STATIC IMPORTED)
 set_target_properties(libnetsnmp PROPERTIES
-	POSITION_INDEPENDENT_CODE ON
-	IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libnetsnmp${CMAKE_STATIC_LIBRARY_SUFFIX}
+  POSITION_INDEPENDENT_CODE ON
+  IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libnetsnmp${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 
 # define the python module
@@ -71,8 +71,8 @@ pybind11_add_module(capi
 
 # add the net-snmp library to the python module
 target_link_libraries(capi
-	PRIVATE libnetsnmp
-	PUBLIC OpenSSL::Crypto
+  PRIVATE libnetsnmp
+  PUBLIC OpenSSL::Crypto
 )
 
 # define dependencies
@@ -115,7 +115,7 @@ if(BUILD_TESTING)
   # add test libraries to the test application
   target_link_libraries(test_capi
     PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov
-	  PUBLIC OpenSSL::Crypto
+    PUBLIC OpenSSL::Crypto
   )
 
   # add the test cases to CTest
