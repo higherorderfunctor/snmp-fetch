@@ -71,8 +71,7 @@ pybind11_add_module(capi
 
 # add the net-snmp library to the python module
 target_link_libraries(capi
-  PRIVATE libnetsnmp
-  PUBLIC OpenSSL::Crypto
+    PRIVATE libnetsnmp OpenSSL::Crypto
 )
 
 # define dependencies
@@ -114,8 +113,7 @@ if(BUILD_TESTING)
 
   # add test libraries to the test application
   target_link_libraries(test_capi
-    PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov
-    PUBLIC OpenSSL::Crypto
+    PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov OpenSSL::Crypto
   )
 
   # add the test cases to CTest
