@@ -23,7 +23,7 @@ ExternalProject_Add(netsnmp
   GIT_TAG v5.8
   GIT_SHALLOW 1
   GIT_CONFIG ${GIT_CONFIG}
-  CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-mibs --disable-mib-loading --disable-applications --disable-scripts --disable-manuals --disable-embedded-perl --without-perl-modules
+  CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules
   BUILD_COMMAND cd snmplib && ${CMAKE_MAKE_PROGRAM}
   INSTALL_COMMAND cd snmplib && ${CMAKE_MAKE_PROGRAM} install
   BUILD_IN_SOURCE 1
