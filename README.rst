@@ -28,11 +28,11 @@ Prerequisites
 Snmp-fetch requires python 3.7, a c++17 compiler (currently only supports gcc-8), and cmake 3.12.4+.  No other user installed dependencies should be required for building this package.
 
 .. ATTENTION::
-Installation can take awhile as the install script will download boost and download and build a light-weight version of net-snmp 5.8 within the package.
+   Installation can take awhile as the install script will download boost and download and build a light-weight version of net-snmp 5.8 within the package.
 
-The boost download can take awhile as it clones each submodule as oppose to downloading the compressed distribution.  There is an issue with downloading the compressed distribution via cmake with 302 redirects to a file failing with cURL.
+   The boost download can take awhile as it clones each submodule as oppose to downloading the compressed distribution.  There is an issue with downloading the compressed distribution via cmake with 302 redirects to a file failing with cURL.
 
-The cmake script will attempt to detect the number of cores on your machine to speedup download and build times.  Expect installation times to range from 5 minutes (4 cores with hyperthreading) to 30+ minutes (1 core).
+   The cmake script will attempt to detect the number of cores on your machine to speedup download and build times.  Expect installation times to range from 5 minutes (4 cores with hyperthreading) to 30+ minutes (1 core).
 
 Installation
 """"""""""""
