@@ -23,7 +23,7 @@ ExternalProject_Add(netsnmp
   GIT_TAG v5.8
   GIT_SHALLOW 1
   GIT_CONFIG ${GIT_CONFIG}
-  CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules
+  CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules  --enable-static --disable-shared
   BUILD_COMMAND cd snmplib && ${CMAKE_MAKE_PROGRAM}
   INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} installlocalheaders && cd snmplib && ${CMAKE_MAKE_PROGRAM} install
   BUILD_IN_SOURCE 1
@@ -47,8 +47,8 @@ ExternalProject_Add(boost
 add_subdirectory(lib/pybind11)
 
 # define the net-snmp library
-add_library(libnetsnmp SHARED IMPORTED)
-set_target_properties(libnetsnmp PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libnetsnmp.so)
+add_library(libnetsnmp STATIC IMPORTED)
+set_target_properties(libnetsnmp PROPERTIES IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libnetsnmp.${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 # define the python module
 pybind11_add_module(capi
