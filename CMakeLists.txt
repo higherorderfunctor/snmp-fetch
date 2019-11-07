@@ -9,6 +9,7 @@ find_package(OpenSSL REQUIRED)
 set(CMAKE_CXX_STANDARD 17)
 set(PYBIND11_CPP_STANDARD -std=c++17)
 
+include_directories(lib/boost)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 # increase install speed with parallel builds
@@ -35,20 +36,7 @@ ExternalProject_Add(netsnmp
   UPDATE_COMMAND ""
 )
 
-# get and install boost
-ExternalProject_Add(boost
-  GIT_REPOSITORY https://github.com/boostorg/boost.git
-  GIT_TAG boost-1.71.0
-  GIT_SHALLOW 1
-  GIT_CONFIG ${GIT_CONFIG}
-  CONFIGURE_COMMAND ./bootstrap.sh --prefix=${CMAKE_BINARY_DIR}
-  BUILD_COMMAND ./b2 headers
-  INSTALL_COMMAND cmake -E copy_directory boost ${CMAKE_BINARY_DIR}/include/boost
-  BUILD_IN_SOURCE 1
-  UPDATE_COMMAND ""
-)
-
-# add pybind11 headers
+# add pybind11
 add_subdirectory(lib/pybind11)
 
 # define the net-snmp library
@@ -77,7 +65,6 @@ target_link_libraries(capi
 # define dependencies
 add_dependencies(capi
   netsnmp
-  boost
 )
 
 if(BUILD_TESTING)
@@ -108,7 +95,6 @@ if(BUILD_TESTING)
   # define test dependencies
   add_dependencies(test_capi
     netsnmp
-    boost
   )
 
   # add test libraries to the test application

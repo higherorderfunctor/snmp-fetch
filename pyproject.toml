@@ -10,7 +10,7 @@ repository = "https://pypi.org/project/snmp-fetch/"
 
 build = "build.py"
 
-include = ["src/**/*", "CMakeLists.txt", "lib/pybind11/**/CMakeLists.txt", "lib/pybind11/**/*.cmake", "lib/pybind11/include/**/*.h", "lib/pybind11/**/LICENSE", "lib/pybind11/**/README.*"]
+include = ["src/**/*", "CMakeLists.txt", "lib/boost/**/*", "lib/pybind11/**/CMakeLists.txt", "lib/pybind11/**/*.cmake", "lib/pybind11/include/**/*.h", "lib/pybind11/**/LICENSE", "lib/pybind11/**/README.*"]
 exclude = ["build"]
 
 [tool.poetry.dependencies]

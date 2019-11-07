@@ -72,7 +72,7 @@ Development
 
    # if working off an existing clone, update the current branch
    git pull  # pull the latest code
-   git submodule update --init --recursive  # pull the latest submodule version
+   git submodule update --init --recursive --depth=1  # pull the latest submodule version
 
    # setup the virtual environment - mypy uses symbolic links in the 'stubs' directory to
    # expose packages that play nicely with the static type checker
@@ -83,7 +83,7 @@ Development
 .. code:: console
 
    # C++ headers are in the following folders for linters
-   export CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include:lib/Catch2/single_include/catch2"
+   export CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include:lib/Catch2/single_include/catch2:lib/boost"
 
    # python linting
    poetry run isort -rc --atomic .
@@ -104,6 +104,27 @@ Development
    pushd build/temp.linux-x86_64-3.7/
    cmake -DBUILD_TESTING=ON ../.. && make test_capi test
    popd
+
+Upgrading Dependencies
+----------------------
+
+.. code:: console
+
+   # boost
+   rm -rf lib/boost
+   mkdir lib/boost
+   wget https://dl.bintray.com/boostorg/release/X.Y.Z/source/boost_X_Y_Z.tar.gz
+   tar -xvf boost_X_Y_Z.tar.gz
+   cd boost_X_Y_Zi
+   ./bootstrap.sh
+   cd tools/bcp
+   ../../b2
+   cd ../../
+   chmod +x bin.v2/tools/bcp 
+   bin.v2/tools/bcp/gcc-8/release/link-static/bcp LICENSE_1_0.txt boost/format.hpp boost/range/combine.hpp ../lib/boost
+   cd ..
+   rm -rf boost_X_Y_Z*
+
 
 
 Known Limitations
