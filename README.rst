@@ -72,7 +72,7 @@ Development
 
    # if working off an existing clone, update the current branch
    git pull  # pull the latest code
-   git submodule update --init --recursive  # pull the latest submodule version
+   git submodule update --init --recursive --depth=1  # pull the latest submodule version
 
    # setup the virtual environment - mypy uses symbolic links in the 'stubs' directory to
    # expose packages that play nicely with the static type checker

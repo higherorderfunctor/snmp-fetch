@@ -154,9 +154,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-
-##
-# Overrides
-#
-!lib/boost/**/*
