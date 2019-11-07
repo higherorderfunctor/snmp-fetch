@@ -62,7 +62,6 @@ target_link_libraries(capi
 # define dependencies
 add_dependencies(capi
   netsnmp
-  boost
 )
 
 if(BUILD_TESTING)
@@ -93,7 +92,6 @@ if(BUILD_TESTING)
   # define test dependencies
   add_dependencies(test_capi
     netsnmp
-    boost
   )
 
   # add test libraries to the test application
