@@ -23,7 +23,10 @@ endif()
 
 # get, build, and install net-snmp
 ExternalProject_Add(netsnmp
-  DOWNLOAD_COMMAND cmake -E copy_directory ${CMAKE_SOURCE_DIR}/lib/net-snmp netsnmp
+  GIT_REPOSITORY https://git.code.sf.net/p/net-snmp/code
+  GIT_TAG v5.8
+  GIT_SHALLOW 1
+  GIT_CONFIG ${GIT_CONFIG}
   CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
   CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules --enable-static --disable-shared --with-pic --with-ldflags=-Bstatic

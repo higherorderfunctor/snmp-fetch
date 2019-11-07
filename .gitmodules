@@ -8,8 +8,3 @@
 	url = https://github.com/catchorg/Catch2.git
 	branch = v2.10.2
 	shallow = true
-[submodule "net-snmp"]
-	path = lib/net-snmp
-	url = https://git.code.sf.net/p/net-snmp/code
-	branch = v5.8
-	shallow = true
