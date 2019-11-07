@@ -21,20 +21,19 @@ if(NOT N EQUAL 0)
   set(ctest_test_args ${ctest_test_args} PARALLEL_LEVEL ${N})
 endif()
 
-# get and install boost
-ExternalProject_Add(boost
-  GIT_REPOSITORY https://github.com/boostorg/boost.git
-  GIT_TAG boost-1.71.0
-  GIT_SHALLOW 1
-  GIT_CONFIG ${GIT_CONFIG}
-  CONFIGURE_COMMAND ./bootstrap.sh --prefix=${CMAKE_BINARY_DIR}
-  BUILD_COMMAND ./b2 headers
-  INSTALL_COMMAND cmake -E copy_directory boost ${CMAKE_BINARY_DIR}/include/boost
+# get, build, and install net-snmp
+ExternalProject_Add(netsnmp
+  DOWNLOAD_COMMAND cmake -E copy_directory ${CMAKE_SOURCE_DIR}/lib/net-snmp netsnmp
+  CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+  CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules --enable-static --disable-shared --with-pic --with-ldflags=-Bstatic
+  BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} snmplib
+  INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} installlocalheaders && cd snmplib && ${CMAKE_MAKE_PROGRAM} install
   BUILD_IN_SOURCE 1
   UPDATE_COMMAND ""
 )
 
-# add pybind11 headers
+# add pybind11
 add_subdirectory(lib/pybind11)
 
 # define the net-snmp library
