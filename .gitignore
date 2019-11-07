@@ -1,6 +1,8 @@
 /*-coveralls.json
 */dask-worker-space/*
 
+!lib/boost
+
 
 ##
 # Source: https://github.com/github/gitignore/blob/master/Global/Vim.gitignore

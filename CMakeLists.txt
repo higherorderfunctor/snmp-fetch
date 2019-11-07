@@ -9,6 +9,7 @@ find_package(OpenSSL REQUIRED)
 set(CMAKE_CXX_STANDARD 17)
 set(PYBIND11_CPP_STANDARD -std=c++17)
 
+include_directories(lib/boost)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
 # increase install speed with parallel builds
@@ -19,21 +20,6 @@ if(NOT N EQUAL 0)
   set(CTEST_BUILD_FLAGS -j${N})
   set(ctest_test_args ${ctest_test_args} PARALLEL_LEVEL ${N})
 endif()
-
-# get, build, and install net-snmp
-ExternalProject_Add(netsnmp
-  GIT_REPOSITORY https://git.code.sf.net/p/net-snmp/code
-  GIT_TAG v5.8
-  GIT_SHALLOW 1
-  GIT_CONFIG ${GIT_CONFIG}
-  CMAKE_ARGS
-    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-  CONFIGURE_COMMAND ./configure --prefix=${CMAKE_BINARY_DIR} --with-defaults --enable-ipv6 --disable-agent --disable-applications --disable-manuals --disable-scripts --disable-mibs --disable-mib-loading --disable-debugging --disable-embedded-perl --without-perl-modules --enable-static --disable-shared --with-pic --with-ldflags=-Bstatic
-  BUILD_COMMAND ${CMAKE_MAKE_PROGRAM} snmplib
-  INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} installlocalheaders && cd snmplib && ${CMAKE_MAKE_PROGRAM} install
-  BUILD_IN_SOURCE 1
-  UPDATE_COMMAND ""
-)
 
 # get and install boost
 ExternalProject_Add(boost
