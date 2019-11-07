@@ -1,6 +1,6 @@
 """Python wrapper to the C API."""
 
-from typing import Any, Optional, Sequence, Text, Tuple
+from typing import Any, Optional, Sequence, Text, Tuple, Type
 
 import pandas as pd
 from toolz.sandbox.core import unzip
@@ -19,7 +19,7 @@ __all__ = [
 def fetch(
         pdu_type: PduType,
         df: Any,
-        var_binds: Sequence[VarBind],
+        var_bind: Type[VarBind],
         config: Optional[SnmpConfig] = None,
         **kwargs: Text
 ) -> Tuple[Any, Sequence[SnmpError]]:
@@ -27,7 +27,7 @@ def fetch(
     params = distribute(
         pdu_type,
         df,
-        var_binds,
+        var_bind,
         config,
         batch_size=None,
         **kwargs
