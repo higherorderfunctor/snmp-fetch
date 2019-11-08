@@ -5,6 +5,7 @@ from typing import Any, Iterator, Optional, Sequence, Text, Tuple, Type
 import pandas as pd
 from toolz.sandbox.core import unzip
 
+import snmp_fetch.pandas_extension  # noqa: F401
 from snmp_fetch.capi import PduType, SnmpConfig, SnmpError, SnmpErrorType
 from .decorators import object_type, pipeline_hook
 from .distributed import distribute
