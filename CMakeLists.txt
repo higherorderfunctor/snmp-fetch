@@ -37,6 +37,14 @@ ExternalProject_Add(netsnmp
 )
 
 # add pybind11
+file(GLOB PYBIND11_DIR_FILES lib/pybind11)
+list(LENGTH PYBIND11_DIR_FILES PYBIND11_EMPTY)
+if(PYBIND11_EMPTY EQUAL 0)
+  file(REMOVE_RECURSE lib/pybind11)
+  execute_process(
+    COMMAND git submodule update --init lib/pybind11
+  )
+endif()
 add_subdirectory(lib/pybind11)
 
 # define the net-snmp library
