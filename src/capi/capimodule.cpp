@@ -39,7 +39,7 @@ fetch(
    */
   
   // check at least one host
-  if (var_binds.empty())
+  if (hosts.empty())
     // raise an exception to the caller
     throw std::runtime_error("No hosts supplied");
 

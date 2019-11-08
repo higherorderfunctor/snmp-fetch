@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "snmp-fetch"
 version = "0.1.7.1"
-description = "An opinionated python SNMPv2 library built for rapid database ingestion."
+description = "An opinionated python3.7 SNMPv2 package designed for rapid database ingestion."
 authors = ["Christopher Aubut <christopher@aubut.me>"]
 license = "CC0-1.0"
 readme = "README.rst"

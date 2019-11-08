@@ -4,7 +4,10 @@ Monkey patches the ipaddress module types to allow for IPv4 and IPv6 comparisons
 """
 
 from ipaddress import (
-    IPv4Address, IPv4Interface, IPv4Network, IPv6Address, IPv6Interface, IPv6Network
+    IPV4LENGTH, IPV6LENGTH, AddressValueError, IPv4Address, IPv4Interface, IPv4Network, IPv6Address,
+    IPv6Interface, IPv6Network, NetmaskValueError, collapse_addresses, get_mixed_type_key,
+    ip_address, ip_interface, ip_network, summarize_address_range, v4_int_to_packed,
+    v6_int_to_packed
 )
 from typing import TypeVar, Union
 
@@ -270,11 +273,44 @@ def ipv6_interface__ge__(self: T, other: T) -> bool:
     )
 
 
-IpAddress = Union[IPv4Address, IPv6Address]
-IpNetwork = Union[IPv4Network, IPv6Network]
-IpInterface = Union[IPv4Interface, IPv6Interface]
+IP_ADDRESS_T = Union[IPv4Address, IPv6Address]  # pylint: disable=invalid-name
+IP_NETWORK_T = Union[IPv4Network, IPv6Network]  # pylint: disable=invalid-name
+IP_INTERFACE_T = Union[IPv4Interface, IPv6Interface]  # pylint: disable=invalid-name
+
+IPV4_PREFIX_LOOKUP_TABLE = {
+    (0xFFFFFFFF << i) & 0xFFFFFFFF: 32 - i for i in range(0, 33)
+}
+
+IPV6_PREFIX_LOOKUP_TABLE = {
+    (
+        (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF << i) &
+        0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+    ): 128 - i
+    for i in range(0, 129)
+}
 
 __all__ = [
-    'IpAddress', 'IpInterface', 'IpNetwork', 'IPv4Address', 'IPv4Interface', 'IPv4Network',
-    'IPv6Address', 'IPv6Interface', 'IPv6Network'
+    'IP_ADDRESS_T',
+    'IP_NETWORK_T',
+    'IP_INTERFACE_T',
+    'IPV4_PREFIX_LOOKUP_TABLE',
+    'IPV6_PREFIX_LOOKUP_TABLE',
+    'AddressValueError',
+    'IPV4LENGTH',
+    'IPV6LENGTH',
+    'IPv4Address',
+    'IPv4Interface',
+    'IPv4Network',
+    'IPv6Address',
+    'IPv6Interface',
+    'IPv6Network',
+    'NetmaskValueError',
+    'collapse_addresses',
+    'get_mixed_type_key',
+    'ip_address',
+    'ip_interface',
+    'ip_network',
+    'summarize_address_range',
+    'v4_int_to_packed',
+    'v6_int_to_packed'
 ]

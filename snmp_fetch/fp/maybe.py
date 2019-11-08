@@ -1,6 +1,6 @@
 """Maybe functor, applicative, monad, and alternative types."""
 
-from typing import Callable, Generic, Optional, Sequence, TypeVar
+from typing import Callable, Generic, Iterator, Optional, Sequence, TypeVar, Union
 
 import attr
 
@@ -57,6 +57,13 @@ class Maybe(Generic[A]):
             return Nothing()
         return Just(a)
 
+    @staticmethod
+    def from_empty(a: Optional[A]) -> 'Maybe[A]':
+        """Return a maybe from an optional empty collection."""
+        if not a:
+            return Nothing()
+        return Just(a)
+
     def combine(
             self, f: Callable[[A], Callable[[A], A]], other: 'Maybe[A]'
     ) -> 'Maybe[A]':
@@ -68,7 +75,7 @@ class Maybe(Generic[A]):
         )
 
     @classmethod
-    def cat(cls, xs: 'Sequence[Maybe[A]]') -> Sequence[A]:
+    def cat(cls, xs: Union[Sequence['Maybe[A]'], Iterator['Maybe[A]']]) -> Sequence[A]:
         """Return a sequence of all the Just values."""
         return [x.value for x in xs if isinstance(x, Just)]
 
@@ -103,7 +110,7 @@ class Just(Generic[A], Maybe[A]):
         """Implement the monad fail operator."""
         return self.value
 
-    def choice(self, a: 'Maybe[A]') -> 'Maybe[A]':
+    def choice(self, _: 'Maybe[A]') -> 'Maybe[A]':
         """Implement the alternative choice operator."""
         return Just(self.value)
 
