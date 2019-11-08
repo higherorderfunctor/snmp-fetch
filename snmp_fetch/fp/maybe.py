@@ -1,5 +1,6 @@
 """Maybe functor, applicative, monad, and alternative types."""
 
+from functools import reduce
 from typing import Callable, Generic, Iterator, Optional, Sequence, TypeVar, Union
 
 import attr
@@ -74,10 +75,24 @@ class Maybe(Generic[A]):
             .choice(other)
         )
 
-    @classmethod
-    def cat(cls, xs: Union[Sequence['Maybe[A]'], Iterator['Maybe[A]']]) -> Sequence[A]:
+    @staticmethod
+    def cat(xs: Union[Sequence['Maybe[A]'], Iterator['Maybe[A]']]) -> Sequence[A]:
         """Return a sequence of all the Just values."""
         return [x.value for x in xs if isinstance(x, Just)]
+
+    @staticmethod
+    def reduce(
+            f: Callable[[A, A], A],
+            xs: Union[Sequence['Maybe[A]'], Iterator['Maybe[A]']],
+            acc: Optional[A] = None
+    ) -> 'Maybe[A]':
+        """Reduce a sequence of maybes."""
+        _xs = Maybe.cat(xs)
+        if acc is None:
+            if _xs:
+                return Just(reduce(f, _xs))
+            return Nothing()
+        return Just(reduce(f, _xs, acc))
 
 
 @attr.s(frozen=True, slots=True)

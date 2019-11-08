@@ -138,9 +138,10 @@ class MetaObjectType(type):
         matrix = cls._matrix
 
         index_set = {
-            reduce(concatv_dtypes, Maybe.cat(map(attrgetter('_index'), col)))
+            Maybe.reduce(concatv_dtypes, map(attrgetter('_index'), col))
             for col in matrix  # pylint: disable=not-an-iterable
         }
+
         if len(index_set) not in {0, 1}:
             raise RuntimeError(f'ObjectTypes do not share common index: {index_set}')
 
@@ -162,18 +163,17 @@ class MetaObjectType(type):
             )
             .fmap(lambda x: np.dtype([('#oid', x)]))
         )
-        index_dtype = Just(reduce(concatv_dtypes, Maybe.cat(map(attrgetter('_index'), col))))
-        value_dtype = Just(reduce(concatv_dtypes, Maybe.cat(map(attrgetter('_dtype'), col))))
-
-        view_dtype = concatv_dtypes(*Maybe.cat(
-            [cls._header_dtype, oid_dtype, index_dtype, value_dtype]
-        ))
+        index_dtype = Maybe.reduce(concatv_dtypes, map(attrgetter('_index'), col))
+        value_dtype = Maybe.reduce(concatv_dtypes, map(attrgetter('_dtype'), col))
+        view_dtype = Maybe.reduce(
+            concatv_dtypes, [cls._header_dtype, oid_dtype, index_dtype, value_dtype]
+        )
 
         arr = reduce(lambda acc, var_bind: cast(
             np.ndarray,
             compose(*var_bind._hooks['before_view'])(acc)  # pylint: disable=protected-access
         ), col, arr)
-        arr = arr.view(view_dtype)
+        arr = view_dtype.fmap(arr.view).from_maybe(arr)  # type: ignore
         arr = reduce(lambda acc, var_bind: cast(
             np.ndarray,
             compose(*var_bind._hooks['after_view'])(acc)  # pylint: disable=protected-access
@@ -185,8 +185,8 @@ class MetaObjectType(type):
 
         # clean up dtypes of empty result
         if arr.size == 0:
-            if view_dtype.fields is not None:
-                for column, dtype in view_dtype.fields.items():
+            if isinstance(view_dtype, Just) and view_dtype.value.fields is not None:
+                for column, dtype in view_dtype.value.fields.items():
                     try:
                         df[column] = df[column].astype(dtype[0])
                     except ValueError:
@@ -261,14 +261,12 @@ class MetaObjectType(type):
             def _dtype_description() -> Sequence[Text]:
                 lines = (
                     dtype.fmap(dtype_fields)
-                    .fmap(lambda x: pp.pformat(dict(x.throw())))
-                    .from_maybe(pp.pformat(dtype))
-                    .split('\n')
+                    .fmap(lambda x: pp.pformat(dict(x.throw())).split('\n'))
+                    .from_maybe([])
                 )
                 return '\n'.join(lines[:1] + [' ' * indent + line for line in lines[1:]])
             return (
-                Maybe.from_optional(cls.dtype)
-                .fmap(lambda x: [f'{label:{indent}s}{_dtype_description()}'])
+                dtype.fmap(lambda x: [f'{label:{indent}s}{_dtype_description()}'])
                 .from_maybe([])
             )
 
