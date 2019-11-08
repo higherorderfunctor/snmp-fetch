@@ -10,7 +10,6 @@ import pytest
 import tests.strategies as _st
 from snmp_fetch import PduType, SnmpConfig, SnmpErrorType
 from snmp_fetch.capi import fetch
-from snmp_fetch.var_bind import VarBind, convert_oid
 from tests.fixtures import snmpsimd
 
 __all__ = ['snmpsimd']
@@ -34,14 +33,9 @@ def test_ambiguous_root_oids(
 ) -> None:
     """Test ambiguous root oids."""
     with pytest.raises(ValueError):
-        vs = [
-            VarBind(
-                oid=convert_oid(oid)
-            ) for oid in oids
-        ]
         fetch(
             pdu_type, hosts,
-            [v() for v in vs]
+            [(oid, (0, 0)) for oid in oids]
         )
 
 
@@ -54,12 +48,11 @@ def test_ambiguous_root_oids(
 def test_no_such_instance(
         hosts: Sequence[Tuple[int, Text, Text]]
 ) -> None:
-    """Test ambiguous root oids."""
+    """Test no such instance."""
     results, errors = fetch(
-        PduType.GET, hosts, [VarBind(oid='1')()]
+        PduType.GET, hosts, [([1], (0, 0))]
     )
 
-    print(errors)
     assert len(results) == 1
     assert results[0].size == 0
     assert len(errors) == len(hosts)
@@ -77,13 +70,12 @@ def test_no_such_instance(
 def test_end_of_mib_view(
         hosts: Sequence[Tuple[int, Text, Text]]
 ) -> None:
-    """Test ambiguous root oids."""
+    """Test end of MIB view."""
     config = SnmpConfig()
     results, errors = fetch(
-        PduType.BULKGET, hosts, [VarBind(oid='2.0')()], config
+        PduType.BULKGET, hosts, [([2, 0], (0, 0))]
     )
 
-    print(errors)
     assert len(results) == 1
     assert results[0].size == 0
     assert len(errors) == len(hosts) * config.max_bulk_repetitions

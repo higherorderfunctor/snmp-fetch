@@ -1,14 +1,12 @@
 """Distributed friendly implementation."""
 
-from functools import reduce
-from typing import Any, Optional, Sequence, Text, Tuple, Type, cast
+from typing import Any, Iterator, Optional, Sequence, Text, Tuple, Type
 
 import numpy as np
-import pandas as pd
 
 from . import PduType, SnmpConfig, SnmpError
 from .capi import fetch as capi_fetch
-from .var_bind import VarBind
+from .object_type import ObjectType
 
 RESERVED_COL_NAMES = [
     '#oid_size', '#result_size', '#result_type', '#oid', '#timestamp'
@@ -20,8 +18,8 @@ HOST_T = Tuple[int, Text, Text]  # pylint: disable=invalid-name
 def fetch(
         pdu_type: PduType,
         hosts: Sequence[HOST_T],
-        var_bind: Type[VarBind],
-        config: SnmpConfig
+        var_bind: Type[ObjectType],
+        config: Optional[SnmpConfig] = None
 ) -> Tuple[Sequence[np.ndarray], Sequence[SnmpError]]:
     """Wrap the C API versions of fetch."""
     return capi_fetch(
@@ -32,17 +30,20 @@ def fetch(
     )
 
 
+def to_pandas(
+        object_type: Type[ObjectType], response: Tuple[Sequence[np.ndarray], Sequence[SnmpError]],
+        data: Optional[Any] = None, index: Optional[Sequence[Text]] = None
+) -> Tuple[Any, Sequence[SnmpError]]:
+    """Wrap ObjectType.to_pandas to deconstruct the response tuple."""
+    results, errors = response
+    return object_type.to_pandas(results, data, index), errors
+
+
 def distribute(
-        pdu_type: PduType,
         df: Any,
-        var_binds: Sequence[VarBind],
-        config: Optional[SnmpConfig] = None,
         batch_size: Optional[int] = None,
         **kwargs: Text
-) -> Sequence[Tuple[
-    Tuple[PduType, Sequence[HOST_T], Sequence[VarBind], SnmpConfig],
-    Tuple[Any, Sequence[VarBind], Sequence[Text]]
-]]:
+) -> Iterator[Tuple[Sequence[HOST_T], Any, Optional[Sequence[Text]]]]:
     """Fetch SNMP results and map to a DataFrame."""
     err_col_names = set([*df.index.names, *df.columns]).intersection(RESERVED_COL_NAMES)
     if err_col_names:
@@ -50,37 +51,29 @@ def distribute(
             f'DataFrame contains the following reserved column names: {err_col_names}'
         )
 
-    if config is None:
-        config = SnmpConfig()
-
     host_column = kwargs.pop('host', 'host')
     community_column = kwargs.pop('snmp_community', 'snmp_community')
 
-    idx = df.index.names
+    index = None
+    if df.index.names is not None and [i for i in df.index.names if i is not None]:
+        index = df.index.names
     df = df.reset_index()
     df.index = df.index.set_names(['#index'])
     df = df.reset_index()
 
-    def _prepare(df: Any) -> Tuple[
-            Tuple[PduType, Sequence[HOST_T], Sequence[VarBind], SnmpConfig],
-            Tuple[Any, Sequence[VarBind], Sequence[Text]]
-    ]:
-        # mypy does not detect that closure of config is no longer optional
-        return ((  # type: ignore
-            pdu_type,
+    def _prepare(df: Any) -> Tuple[Sequence[HOST_T], Any, Optional[Sequence[Text]]]:
+        return (
             [
                 (i, str(h), c) for i, h, c
                 in df[['#index', host_column, community_column]].values
             ],
-            var_binds,
-            config
-        ), (
             df,
-            var_binds,
-            cast(Sequence[Text], idx)
-        ))
+            index
+        )
 
     if batch_size:
         batched = [df[i:i+batch_size] for i in range(0, df.shape[0], batch_size)]
-        return [_prepare(batch) for batch in batched]
-    return [_prepare(df)]
+        for batch in batched:
+            yield _prepare(batch)
+        return
+    yield _prepare(df)
