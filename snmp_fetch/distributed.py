@@ -67,7 +67,7 @@ def distribute(
                 (i, str(h), c) for i, h, c
                 in df[['#index', host_column, community_column]].values
             ],
-            df,
+            df.set_index('#index'),
             index
         )
 
