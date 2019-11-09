@@ -1,5 +1,6 @@
 """Variable bindings."""
 
+from operator import methodcaller
 from typing import Any, Callable, Mapping, Optional, Sequence, Text, Tuple, Type, Union, cast
 
 import numpy as np
@@ -17,16 +18,13 @@ def object_type(
         parent: Optional[Type[ObjectType]] = None, oid: Optional[Text] = None
 ) -> Callable[[type], Type[ObjectType]]:
     """Decorate a class as an object type."""
-    def _object_type(cls: type) -> Type[ObjectType]:
-        return type(
-            cls.__name__, (cls, ObjectType), {
-                '__module__': cls.__module__,
-                '__slots__': [],
-                '__doc__': cls.__doc__,
-                '_parent': Maybe.from_optional(parent),
-                '_oid': Maybe.from_optional(oid)
-            }
-        )
+    def _object_type(cls: Type[ObjectType]) -> Type[ObjectType]:
+        if not issubclass(cls, ObjectType):
+            raise TypeError('Can only decorate types of ObjectType')
+        cls._parent = Maybe.from_optional(parent)  # pylint: disable=protected-access
+        cls._oid = Maybe.from_optional(oid)  # pylint: disable=protected-access
+        cls._parent.fmap(methodcaller('_append_child', cls))  # pylint: disable=protected-access
+        return cls
     return _object_type
 
 
