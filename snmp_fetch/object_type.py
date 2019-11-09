@@ -7,7 +7,6 @@ from functools import partial, reduce
 from operator import attrgetter, methodcaller
 from typing import Any, Callable, DefaultDict, Dict, Optional, Sequence, Text, Tuple, cast
 
-import attr
 import numpy as np
 import pandas as pd
 from toolz.functoolz import compose
@@ -319,7 +318,6 @@ class MetaObjectType(type):
         print(cls.description)
 
 
-@attr.s(frozen=True, slots=True)
 class ObjectType(metaclass=MetaObjectType):
     # pylint: disable=too-few-public-methods
     """ObjectType definition."""
