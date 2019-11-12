@@ -119,7 +119,7 @@ class InetSeriesAccessor:
 
     def to_object_identifier(self) -> Any:
         """Extract an object identifier buffer as a string."""
-        return self.buffer.to_object_identifier()[['object_identifier']]
+        return self.buffer.to_object_identifier()['object_identifier']
 
     def to_timedelta(
             self, denominator: int = 1, unit: Text = 'seconds'
