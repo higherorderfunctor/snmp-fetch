@@ -63,49 +63,11 @@ class InetSeriesAccessor:
                 return pd.DataFrame(self.obj.apply(lambda x: [x[s] for s in ss]).tolist())
             raise RuntimeError(f'Not a valid input slice: {ss}')
 
-        def to_inet_address(self, default_zone: Any = None) -> Any:
-            """Extract an inet address with leading address size and possible zone."""
-            def _to_inet_address(buffer: np.ndarray) -> Tuple[ip.IP_ADDRESS_T, Any, np.ndarray]:
-                if buffer[0] == 4:
-                    return (
-                        ip.IPv4Address(cuint8_to_int(buffer[1:5])),
-                        default_zone,
-                        buffer[5:]
-                    )
-                if buffer[0] == 16:
-                    return (
-                        ip.IPv6Address(cuint8_to_int(buffer[1:17])),
-                        default_zone,
-                        buffer[17:]
-                    )
-                if buffer[0] == 8:
-                    return (
-                        ip.IPv4Address(cuint8_to_int(buffer[1:9])),
-                        cuint8_to_int(buffer[9:13]),
-                        buffer[13:]
-                    )
-                if buffer[0] == 20:
-                    return (
-                        ip.IPv6Address(cuint8_to_int(buffer[1:17])),
-                        cuint8_to_int(buffer[17:21]),
-                        buffer[21:]
-                    )
-                raise TypeError('Datatype not understood')
+        def chunk(self) -> Any:
+            """Slice the buffer by a sized parameter."""
             return pd.DataFrame(
-                self.obj.apply(_to_inet_address).tolist(),
-                columns=['inet_address', 'zone', '_buffer']
-            )
-
-        def to_object_identifier(self) -> Any:
-            """Extract an object identifier buffer as a string."""
-            def _to_object_identifier(buffer: np.ndarray) -> Tuple[Text, np.ndarray]:
-                return (
-                    '.'+'.'.join(buffer[1:int(buffer[0])+1].astype(str)),
-                    buffer[int(buffer[0])+1:]
-                )
-            return pd.DataFrame(
-                self.obj.apply(_to_object_identifier).tolist(),
-                columns=['object_identifier', '_buffer']
+                self.obj.apply(lambda x: (x[1:int(x[0])+1], x[int(x[0])+1:])).tolist(),
+                columns=['sized', 'buffer']
             )
 
     def __init__(self, obj: Any) -> None:
@@ -113,13 +75,43 @@ class InetSeriesAccessor:
         self.obj = obj
         self.buffer = self.InetSeriesBufferAccessor(obj)
 
-    def _to_inet_address(self, default_zone: Any = None) -> Any:
+    def to_inet_address(self, default_zone: Any = None) -> Any:
         """Extract an inet address with leading address size and possible zone."""
-        return self.buffer.to_inet_address(default_zone)[['inet_address', 'zone']]
+        def _to_inet_address(buffer: np.ndarray) -> Tuple[ip.IP_ADDRESS_T, Any]:
+            if len(buffer) == 4:
+                return (
+                    ip.IPv4Address(cuint8_to_int(buffer)),
+                    default_zone
+                )
+            if len(buffer) == 16:
+                return (
+                    ip.IPv6Address(cuint8_to_int(buffer)),
+                    default_zone
+                )
+            if len(buffer) == 8:
+                return (
+                    ip.IPv4Address(cuint8_to_int(buffer[:8])),
+                    cuint8_to_int(buffer[8:])
+                )
+            if len(buffer) == 20:
+                return (
+                    ip.IPv6Address(cuint8_to_int(buffer[:16])),
+                    cuint8_to_int(buffer[16:])
+                )
+            raise TypeError('Datatype not understood')
+        return pd.DataFrame(
+            self.obj.apply(_to_inet_address).tolist(),
+            columns=['inet_address', 'zone']
+        )
 
     def to_object_identifier(self) -> Any:
         """Extract an object identifier buffer as a string."""
-        return self.buffer.to_object_identifier()['object_identifier']
+        def _to_object_identifier(buffer: np.ndarray) -> Text:
+            return '.'+'.'.join(buffer.astype(str))
+        return pd.DataFrame(
+            self.obj.apply(_to_object_identifier).tolist(),
+            columns=['object_identifier']
+        )
 
     def to_timedelta(
             self, denominator: int = 1, unit: Text = 'seconds'
