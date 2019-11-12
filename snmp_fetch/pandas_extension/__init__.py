@@ -1,12 +1,31 @@
 """Extended DataFrame functionality."""
 
-from typing import Any, Text, Tuple, Union, cast
+from typing import Any, Iterator, Optional, Sequence, Text, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
 
 from snmp_fetch.utils import cuint8_to_int
 from .types import ip_address as ip
+
+
+def column_names(
+        n: Optional[int] = None, alphabet: Sequence[Text] = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+) -> Iterator[Text]:
+    """Generate unique temporary column names."""
+    base_gen = column_names(alphabet=alphabet)
+    base = ''
+    letters = alphabet
+    while True:
+        if n is not None:
+            if n <= 0:
+                return
+            n = n - 1
+        if not letters:
+            base = next(base_gen)  # pylint: disable=stop-iteration-return  # infinite generator
+            letters = alphabet
+        column, letters = letters[0], letters[1:]
+        yield base + column
 
 
 @pd.api.extensions.register_dataframe_accessor('inet')
@@ -35,6 +54,8 @@ class InetDataFrameAccessor:
                 ip.ip_network((ip_address, cidr_or_mask), strict=strict)
             )
 
+        if self.obj.empty:
+            return pd.Series([])
         return self.obj.apply(_to_cidr_address, axis=1)
 
 
@@ -55,19 +76,22 @@ class InetSeriesAccessor:
             """Initialize the pandas extension."""
             self.obj = obj
 
-        def __getitem__(self, ss: Union[int, slice, Tuple[Union[int, slice]]]) -> Any:
+        def __getitem__(self, ss: Union[int, slice, Tuple[Union[int, slice], ...]]) -> Any:
             """Slice the buffer."""
             if isinstance(ss, (int, slice)):
                 return self.obj.apply(lambda x: x[ss])
             if isinstance(ss, tuple):
-                return pd.DataFrame(self.obj.apply(lambda x: [x[s] for s in ss]).tolist())
+                return pd.DataFrame(
+                    self.obj.apply(lambda x: [x[s] for s in ss]).tolist(),
+                    columns=list(column_names(len(ss)))
+                )
             raise RuntimeError(f'Not a valid input slice: {ss}')
 
         def chunk(self) -> Any:
             """Slice the buffer by a sized parameter."""
             return pd.DataFrame(
                 self.obj.apply(lambda x: (x[1:int(x[0])+1], x[int(x[0])+1:])).tolist(),
-                columns=['sized', 'buffer']
+                columns=list(column_names(2))
             )
 
     def __init__(self, obj: Any) -> None:
@@ -101,17 +125,14 @@ class InetSeriesAccessor:
             raise TypeError('Datatype not understood')
         return pd.DataFrame(
             self.obj.apply(_to_inet_address).tolist(),
-            columns=['inet_address', 'zone']
+            columns=list(column_names(2))
         )
 
     def to_object_identifier(self) -> Any:
         """Extract an object identifier buffer as a string."""
         def _to_object_identifier(buffer: np.ndarray) -> Text:
             return '.'+'.'.join(buffer.astype(str))
-        return pd.DataFrame(
-            self.obj.apply(_to_object_identifier).tolist(),
-            columns=['object_identifier']
-        )
+        return self.obj.apply(_to_object_identifier)
 
     def to_timedelta(
             self, denominator: int = 1, unit: Text = 'seconds'
