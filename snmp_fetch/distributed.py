@@ -5,7 +5,7 @@ from typing import Any, Iterator, Optional, Sequence, Text, Tuple, Type
 import numpy as np
 
 from . import PduType, SnmpConfig, SnmpError
-from .capi import fetch as capi_fetch
+from .api import fetch as api_fetch
 from .object_type import ObjectType
 
 RESERVED_COL_NAMES = [
@@ -22,7 +22,7 @@ def fetch(
         config: Optional[SnmpConfig] = None
 ) -> Tuple[Sequence[np.ndarray], Sequence[SnmpError]]:
     """Wrap the C API versions of fetch."""
-    return capi_fetch(
+    return api_fetch(
         pdu_type,
         hosts,
         var_bind.null_var_binds(),

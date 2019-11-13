@@ -102,7 +102,7 @@ Development
 
    # C++ testing
    pushd build/temp.linux-x86_64-3.7/
-   cmake -DBUILD_TESTING=ON ../.. && make test_capi test
+   cmake -DBUILD_TESTING=ON ../.. && make test_api test
    popd
 
 Upgrading Dependencies

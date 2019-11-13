@@ -56,23 +56,23 @@ set_target_properties(libnetsnmp PROPERTIES
 )
 
 # define the python module
-pybind11_add_module(capi
-  src/capi/capimodule.cpp
-  src/capi/asyncio.cpp
-  src/capi/debug.cpp
-  src/capi/results.cpp
-  src/capi/session.cpp
-  src/capi/types.cpp
-  src/capi/utils.cpp
+pybind11_add_module(api
+  snmp_fetch/api/module.cpp
+  snmp_fetch/api/asyncio.cpp
+  snmp_fetch/api/debug.cpp
+  snmp_fetch/api/results.cpp
+  snmp_fetch/api/session.cpp
+  snmp_fetch/api/types.cpp
+  snmp_fetch/api/utils.cpp
 )
 
 # add the net-snmp library to the python module
-target_link_libraries(capi
+target_link_libraries(api
     PRIVATE libnetsnmp OpenSSL::Crypto
 )
 
 # define dependencies
-add_dependencies(capi
+add_dependencies(api
   netsnmp
 )
 
@@ -87,33 +87,33 @@ if(BUILD_TESTING)
   include_directories(${CATCH_SOURCE_DIR}/single_include/catch2)
 
   # define the test application
-  add_executable(test_capi EXCLUDE_FROM_ALL
-    tests/capi/test_capi.cpp
-    src/capi/capimodule.cpp
-    src/capi/asyncio.cpp
-    src/capi/debug.cpp
-    src/capi/results.cpp
-    src/capi/session.cpp
-    src/capi/types.cpp
-    src/capi/utils.cpp
+  add_executable(test_api EXCLUDE_FROM_ALL
+    tests/api/test_api.cpp
+    snmp_fetch/api/module.cpp
+    snmp_fetch/api/asyncio.cpp
+    snmp_fetch/api/debug.cpp
+    snmp_fetch/api/results.cpp
+    snmp_fetch/api/session.cpp
+    snmp_fetch/api/types.cpp
+    snmp_fetch/api/utils.cpp
   )
 
   # add compiler options
-  target_compile_options(test_capi PRIVATE -O0 -fprofile-arcs -ftest-coverage)
+  target_compile_options(test_api PRIVATE -O0 -fprofile-arcs -ftest-coverage)
 
   # define test dependencies
-  add_dependencies(test_capi
+  add_dependencies(test_api
     netsnmp
   )
 
   # add test libraries to the test application
-  target_link_libraries(test_capi
+  target_link_libraries(test_api
     PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov OpenSSL::Crypto
   )
 
   # add the test cases to CTest
   include(CTest)
   include(${CATCH_SOURCE_DIR}/contrib/Catch.cmake)
-  catch_discover_tests(test_capi)
+  catch_discover_tests(test_api)
 
 endif()
