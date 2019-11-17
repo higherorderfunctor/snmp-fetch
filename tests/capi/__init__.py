@@ -1,1 +1,0 @@
-"""Snmp-fetch capi tests."""

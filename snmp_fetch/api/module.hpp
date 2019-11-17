@@ -1,5 +1,5 @@
 /**
- *  capimodule.hpp - Main entry point for the python C++ extension.
+ *  module.hpp - Main entry point for the python C++ extension.
  */
 
 #ifndef SNMP_FETCH__CAPIMODULE_HPP

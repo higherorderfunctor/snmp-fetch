@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "../../src/capi/capimodule.hpp"
+#include "../../snmp_fetch/api/module.hpp"
 
 namespace py = pybind11;
 

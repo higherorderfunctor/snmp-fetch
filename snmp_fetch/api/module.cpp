@@ -1,8 +1,8 @@
 /**
- *  capimodule.cpp - Main entry point for the python C++ extension.
+ *  module.cpp - Main entry point for the python C++ extension.
  */
 
-#include "capimodule.hpp"
+#include "module.hpp"
 
 namespace py = pybind11;
 
@@ -104,9 +104,9 @@ fetch(
 }
 
 /**
- *  capi - Python module definition.
+ *  api - Python module definition.
  */
-PYBIND11_MODULE(capi, m) {
+PYBIND11_MODULE(api, m) {
   // module doc comment
   m.doc() = "Python wrapper around snmp-fetch C++ API.";
 

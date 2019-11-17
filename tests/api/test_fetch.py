@@ -9,7 +9,7 @@ import pytest
 
 import tests.strategies as _st
 from snmp_fetch import PduType, SnmpConfig, SnmpErrorType
-from snmp_fetch.capi import fetch
+from snmp_fetch.api import fetch
 from tests.fixtures import snmpsimd
 
 __all__ = ['snmpsimd']

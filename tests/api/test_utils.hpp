@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../../src/capi/utils.hpp"
+#include "../../snmp_fetch/api/utils.hpp"
 
 TEST_CASE( "Test utility methods", "[utils]" ) {
 
