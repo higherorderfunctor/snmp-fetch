@@ -21,6 +21,7 @@ def fetch(
         pdu_type: PduType,
         df: Any,
         obj_type: Type[ObjectType],
+        parameter: Optional[Text] = None,
         config: Optional[SnmpConfig] = None,
         **kwargs: Text
 ) -> Tuple[Any, Sequence[SnmpError]]:
@@ -31,6 +32,7 @@ def fetch(
                 pdu_type,
                 hosts,
                 obj_type,
+                parameter,
                 config=config
             )
             yield obj_type.to_pandas(results, data, index), errors

@@ -19,13 +19,14 @@ def fetch(
         pdu_type: PduType,
         hosts: Sequence[HOST_T],
         var_bind: Type[ObjectType],
+        parameter: Optional[Text] = None,
         config: Optional[SnmpConfig] = None
 ) -> Tuple[Sequence[np.ndarray], Sequence[SnmpError]]:
     """Wrap the C API versions of fetch."""
     return api_fetch(
         pdu_type,
         hosts,
-        var_bind.null_var_binds(),
+        var_bind.null_var_binds(parameter),
         config=config if config is not None else SnmpConfig()
     )
 
@@ -42,7 +43,7 @@ def to_pandas(
 def distribute(
         df: Any,
         batch_size: Optional[int] = None,
-        **kwargs: Text
+        **kwargs: Any
 ) -> Iterator[Tuple[Sequence[HOST_T], Any, Optional[Sequence[Text]]]]:
     """Fetch SNMP results and map to a DataFrame."""
     err_col_names = set([*df.index.names, *df.columns]).intersection(RESERVED_COL_NAMES)
@@ -61,12 +62,17 @@ def distribute(
     df.index = df.index.set_names(['#index'])
     df = df.reset_index()
 
+    def default_get_hosts(df: Any) -> Sequence[HOST_T]:
+        return [
+            (i, str(h), c) for i, h, c
+            in df[['#index', host_column, community_column]].values
+        ]
+
+    get_hosts = kwargs.pop('get_hosts', default_get_hosts)
+
     def _prepare(df: Any) -> Tuple[Sequence[HOST_T], Any, Optional[Sequence[Text]]]:
         return (
-            [
-                (i, str(h), c) for i, h, c
-                in df[['#index', host_column, community_column]].values
-            ],
+            get_hosts(df),
             df.set_index('#index'),
             index
         )
