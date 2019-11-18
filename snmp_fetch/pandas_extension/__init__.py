@@ -83,7 +83,8 @@ class InetSeriesAccessor:
             if isinstance(ss, tuple):
                 return pd.DataFrame(
                     self.obj.apply(lambda x: [x[s] for s in ss]).tolist(),
-                    columns=list(column_names(len(ss)))
+                    columns=list(column_names(len(ss))),
+                    index=self.obj.index
                 )
             raise RuntimeError(f'Not a valid input slice: {ss}')
 
