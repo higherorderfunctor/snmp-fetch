@@ -92,7 +92,8 @@ class InetSeriesAccessor:
             """Slice the buffer by a sized parameter."""
             return pd.DataFrame(
                 self.obj.apply(lambda x: (x[1:int(x[0])+1], x[int(x[0])+1:])).tolist(),
-                columns=list(column_names(2))
+                columns=list(column_names(2)),
+                index=self.obj.index
             )
 
     def __init__(self, obj: Any) -> None:
@@ -126,7 +127,8 @@ class InetSeriesAccessor:
             raise TypeError('Datatype not understood')
         return pd.DataFrame(
             self.obj.apply(_to_inet_address).tolist(),
-            columns=list(column_names(2))
+            columns=list(column_names(2)),
+            index=self.obj.index
         )
 
     def to_object_identifier(self) -> Any:
