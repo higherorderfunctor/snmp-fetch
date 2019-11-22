@@ -39,6 +39,25 @@ class InetDataFrameAccessor:
         """Initialize the pandas extension."""
         self.obj = obj
 
+    def to_interface_address(self) -> Any:
+        """Return a composable function to convert an IP address and mask/prefix to a network."""
+        def _to_int_address(
+                objs: Tuple[ip.IP_ADDRESS_T, Union[int, ip.IP_ADDRESS_T]]
+        ) -> ip.IP_INTERFACE_T:
+            ip_address, cidr_or_mask = objs
+            if isinstance(cidr_or_mask, ip.IPv4Address):
+                cidr_or_mask = ip.IPV4_PREFIX_LOOKUP_TABLE[int(cidr_or_mask)]
+            if isinstance(cidr_or_mask, ip.IPv6Address):
+                cidr_or_mask = ip.IPV6_PREFIX_LOOKUP_TABLE[int(cidr_or_mask)]
+            return cast(
+                ip.IP_INTERFACE_T,
+                ip.ip_interface((ip_address, cidr_or_mask))
+            )
+
+        if self.obj.empty:
+            return pd.Series([])
+        return self.obj.apply(_to_int_address, axis=1)
+
     def to_cidr_address(self, strict: bool = False) -> Any:
         """Return a composable function to convert an IP address and mask/prefix to a network."""
         def _to_cidr_address(
