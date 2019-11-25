@@ -135,8 +135,8 @@ class InetSeriesAccessor:
                 )
             if len(buffer) == 8:
                 return (
-                    ip.IPv4Address(cuint8_to_int(buffer[:8])),
-                    cuint8_to_int(buffer[8:])
+                    ip.IPv4Address(cuint8_to_int(buffer[:4])),
+                    cuint8_to_int(buffer[4:])
                 )
             if len(buffer) == 20:
                 return (
