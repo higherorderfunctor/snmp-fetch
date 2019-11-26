@@ -1,10 +1,12 @@
 /**
- *  utils.cpp
+ *  utils.cpp - Utility functions.
+ *
+ *  To avoid circular imports, this file should not depend on any other imports from this project.
  */
 
 #include "utils.hpp"
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 /**
  *  oid_to_string

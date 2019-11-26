@@ -4,7 +4,7 @@
 
 #include "debug.hpp"
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 /**
  *  print_oid

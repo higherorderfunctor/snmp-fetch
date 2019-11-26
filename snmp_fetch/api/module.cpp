@@ -6,7 +6,7 @@
 
 namespace py = pybind11;
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 /**
  *  as_pyarray

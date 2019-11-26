@@ -2,13 +2,13 @@
  *  asyncio.hpp - Async IO handlers.
  */
 
-#ifndef SNMP_FETCH__ASYNCIO_HPP
-#define SNMP_FETCH__ASYNCIO_HPP
+#ifndef NETFRAME__API__ASYNCIO_HPP
+#define NETFRAME__API__ASYNCIO_HPP
 
 #include "results.hpp"
 #include "session.hpp"
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 /**
  *  async_sessions_send - Dispatch request PDUs.

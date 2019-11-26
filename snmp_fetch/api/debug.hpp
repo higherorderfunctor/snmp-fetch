@@ -2,15 +2,15 @@
  *  debug.hpp - Debug functions.
  */
 
-#ifndef SNMP_FETCH__DEBUG_HPP
-#define SNMP_FETCH__DEBUG_HPP
+#ifndef NETFRAME__API__DEBUG_HPP
+#define NETFRAME__API__DEBUG_HPP
 
 #include <iostream>
 
 #include "types.hpp"
 #include "utils.hpp"
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 /**
  *  print_oid - Debug print an OID.

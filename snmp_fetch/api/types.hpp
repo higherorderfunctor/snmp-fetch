@@ -2,9 +2,10 @@
  *  type.hpp - Common type definitions.
  */
 
-#ifndef SNMP_FETCH__TYPES_H
-#define SNMP_FETCH__TYPES_H
+#ifndef NETFRAME__API__TYPES_H
+#define NETFRAME__API__TYPES_H
 
+#include <list>
 #include <iostream>
 #include <boost/format.hpp>
 
@@ -15,29 +16,24 @@ extern "C" {
 
 #include "utils.hpp"
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 // default values
-#define SNMP_FETCH__DEFAULT_RETRIES 3
-#define SNMP_FETCH__DEFAULT_TIMEOUT 3
-#define SNMP_FETCH__DEFAULT_MAX_ACTIVE_SESSIONS 10
-#define SNMP_FETCH__DEFAULT_MAX_VAR_BINDS_PER_PDU 10
-#define SNMP_FETCH__DEFAULT_MAX_BULK_REPETITIONS 10
+#define DEFAULT_MAX_ACTIVE_SESSIONS 10
+#define DEFAULT_RETRIES 3
+#define DEFAULT_TIMEOUT 3
+#define DEFAULT_MAX_VAR_BINDS_PER_PDU 10
+#define DEFAULT_MAX_BULK_REPETITIONS 10
 
 
 // type aliases
-using host_t = std::tuple<uint64_t, std::string, std::string>;
-using oid_t = std::vector<uint64_t>;
-using oid_size_t = uint64_t;
-using value_size_t = uint64_t;
-using var_bind_size_t = std::tuple<oid_size_t, value_size_t>;
-using var_bind_t = std::tuple<oid_t, var_bind_size_t>;
+using ObjectIdentity = std::vector<uint64_t>;
 
 
 /**
- *  async_status_t - Different statuses of an async session.
+ *  AsyncStatus - Different statuses of an asynchronous session.
  */
-enum async_status_t {
+enum AsyncStatus {
   ASYNC_IDLE = 0,
   ASYNC_WAITING,
   ASYNC_RETRY
@@ -45,9 +41,9 @@ enum async_status_t {
 
 
 /**
- *  PDU_TYPE - Constants exposed to python.
+ *  PduType - SNMP PDU types.
  */
-enum PDU_TYPE {
+enum PduType {
     GET = SNMP_MSG_GET,
     NEXT= SNMP_MSG_GETNEXT,
     BULKGET = SNMP_MSG_GETBULK,
@@ -55,31 +51,48 @@ enum PDU_TYPE {
 
 
 /**
- *  SnmpConfig - Pure C++ config type exposed through the to python module.
+ *  NullVarBind - ObjectIdentity and buffer sizes for a null variable binding to be filled.
+ */
+struct NullVarBind {
+  ObjectIdentity oid;
+  uint64_t oid_size;
+  uint64_t value_size;
+
+  /**
+   *  NullVarBind::operator== - Compare two null variable bindings by value.
+   *
+   *  @param other The other SnmpConfig to compare.
+   *  @return      Boolean indicating if the other NullVarBind equals this one.
+   */
+  bool operator==(const NullVarBind &other);
+
+  /**
+   *  to_string - String method used for __str__ and __repr__ which mimics attrs.
+   *
+   *  @return String representation of a NullVarBind.
+   */
+  std::string to_string();
+
+};
+
+
+/**
+ *  SnmpConfig - SNMP configuration.
  */
 struct SnmpConfig {
 
   ssize_t retries;
   ssize_t timeout;
-  size_t max_active_sessions;
   size_t max_var_binds_per_pdu;
   size_t max_bulk_repetitions;
 
   /**
-   *  SnmpConfig - Constructor with default values.
+   *  SnmpConfig::operator== - Compare two SNMP configurations by value.
+   *
+   *  @param other The other SnmpConfig to compare.
+   *  @return      Boolean indicating if the other SnmpConfig equals this SnmpConfig.
    */
-  SnmpConfig(
-      ssize_t retries = SNMP_FETCH__DEFAULT_RETRIES,
-      ssize_t timeout = SNMP_FETCH__DEFAULT_TIMEOUT,
-      size_t max_active_sessions = SNMP_FETCH__DEFAULT_MAX_ACTIVE_SESSIONS,
-      size_t max_var_binds_per_pdu = SNMP_FETCH__DEFAULT_MAX_VAR_BINDS_PER_PDU,
-      size_t max_bulk_repetitions = SNMP_FETCH__DEFAULT_MAX_BULK_REPETITIONS
-  );
-
-  /**
-   *  SnmpConfig::operator==
-   */
-  bool operator==(const SnmpConfig &a);
+  bool operator==(const SnmpConfig &other);
 
   /**
    *  to_string - String method used for __str__ and __repr__ which mimics attrs.
@@ -92,9 +105,62 @@ struct SnmpConfig {
 
 
 /**
- *  ERROR_TYPE - Constants exposed to python for identifying where an error happened.
+ *  ObjectIdentityParameter - Start and optional end ObjectIdentity parameter.
  */
-enum SNMP_ERROR_TYPE {
+struct ObjectIdentityParameter {
+
+  ObjectIdentity start;
+  std::optional<ObjectIdentity> end;
+
+  /**
+   *  ObjectIdentityParameter::operator== - Compare two object identity parameters by value.
+   *
+   *  @param other The other ObjectIdentityParameter to compare.
+   *  @return      Boolean indicating if the other Parameter equals this Parameter.
+   */
+  bool operator==(const ObjectIdentityParameter &other);
+
+  /**
+   *  to_string - String method used for __str__ and __repr__ which mimics attrs.
+   *
+   *  @return String representation of a ObjectIdentityParameter.
+   */
+  std::string to_string();
+
+};
+
+
+/**
+ *  Host - Host configuration.
+ */
+struct Host {
+  uint64_t index;
+  std::string hostname;
+  std::list<std::string> communities;
+  std::optional<std::list<ObjectIdentityParameter>> parameters;
+  std::optional<SnmpConfig> config;
+
+  /**
+   *  Host::operator== - Compare two host configurations by value.
+   *
+   *  @param other The other host to compare.
+   *  @return      Boolean indicating if the other host equals this host.
+   */
+  bool operator==(const Host &other);
+
+  /**
+   *  to_string - String method used for __str__ and __repr__ which mimics attrs.
+   *
+   *  @return String representation of a Host.
+   */
+  std::string to_string();
+};
+
+
+/**
+ *  SnmpErrorType - SNMP error types.
+ */
+enum SnmpErrorType {
     SESSION_ERROR = 0,
     CREATE_REQUEST_PDU_ERROR,
     SEND_ERROR,
@@ -108,37 +174,26 @@ enum SNMP_ERROR_TYPE {
 
 
 /**
- *  SnmpError - Pure C++ container for various error types exposed to python.
+ *  SnmpError - SNMP error.
  */
 struct SnmpError {
 
-  SNMP_ERROR_TYPE type;
-  host_t host;
+  SnmpErrorType type;
+  Host host;
   std::optional<int64_t> sys_errno;
   std::optional<int64_t> snmp_errno;
   std::optional<int64_t> err_stat;
   std::optional<int64_t> err_index;
-  std::optional<oid_t> err_oid;
+  std::optional<ObjectIdentity> err_oid;
   std::optional<std::string> message;
 
   /**
-   *  SnmpError - Constructor method with default values.
+   *  SnmpError::operator== - Compare two SNMP errors by value.
+   *
+   *  @param other The other SnmpError to compare.
+   *  @return      Boolean indicating if the other SnmpError equals this SnmpError.
    */
-  SnmpError(
-    SNMP_ERROR_TYPE type,
-    host_t host,
-    std::optional<int64_t> sys_errno = {},
-    std::optional<int64_t> snmp_errno = {},
-    std::optional<int64_t> err_stat = {},
-    std::optional<int64_t> err_index = {},
-    std::optional<oid_t> err_oid = {},
-    std::optional<std::string> message = {}
-  );
-
-  /**
-   *  SnmpError::operator==
-   */
-  bool operator==(const SnmpError &a);
+  bool operator==(const SnmpError &other);
 
   /**
    *  to_string - String method used for __str__ and __repr__ which mimics attrs.
@@ -151,18 +206,15 @@ struct SnmpError {
 
 
 /**
- *  async_state - State wrapper for net-snmp sessions.
- *
- *  Host should be left as copy as the underlying pending host list destroys the elements that
- *  were used to build this structure.
+ *  AsyncState - State wrapper for net-snmp sessions and callbacks.
  */
-struct async_state {
-  async_status_t async_status;
+struct AsyncState {
+  AsyncStatus async_status;
   void *session;
   int pdu_type;
-  host_t host;
-  std::vector<var_bind_t> *var_binds;
-  std::vector<std::vector<oid_t>> next_var_binds;
+  Host host;
+  std::vector<NullVarBind> *var_binds;
+  std::vector<std::vector<NullVarBind>> next_var_binds;
   std::vector<std::vector<uint8_t>> *results;
   std::vector<SnmpError> *errors;
   SnmpConfig *config;

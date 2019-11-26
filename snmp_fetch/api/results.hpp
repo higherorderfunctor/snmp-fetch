@@ -2,8 +2,8 @@
  *  results.hpp - Process async IO results.
  */
 
-#ifndef SNMP_FETCH__RESULTS_HPP
-#define SNMP_FETCH__RESULTS_HPP
+#ifndef NETFRAME__API__RESULTS_HPP
+#define NETFRAME__API__RESULTS_HPP
 
 #include <map>
 #include <time.h>
@@ -19,7 +19,7 @@ extern "C" {
 // macro to align a number of bytes to 8 bytes
 #define UINT64_ALIGN(x) ((x + 7) & ~0x07)
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 /**
  *  append_result - Append one response variable binding to the results.

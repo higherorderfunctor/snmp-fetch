@@ -4,7 +4,7 @@
 
 #include "session.hpp"
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 /**
  *  create_netsnmp_session

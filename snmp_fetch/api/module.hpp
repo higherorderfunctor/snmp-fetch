@@ -2,8 +2,8 @@
  *  module.hpp - Main entry point for the python C++ extension.
  */
 
-#ifndef SNMP_FETCH__CAPIMODULE_HPP
-#define SNMP_FETCH__CAPIMODULE_HPP
+#ifndef NETFRAME__API__CAPIMODULE_HPP
+#define NETFRAME__API__CAPIMODULE_HPP
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -14,7 +14,7 @@
 
 namespace py = pybind11;
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 /**
  *  as_pyarray - Wraps a C++ sequence in a numpy array.  This object will free the underlying data

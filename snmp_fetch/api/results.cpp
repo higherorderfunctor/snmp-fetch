@@ -4,7 +4,7 @@
 
 #include "results.hpp"
 
-namespace snmp_fetch {
+namespace netframe::api {
 
 std::map<uint8_t, std::string> warning_value_types = {
   {128, "NO_SUCH_OBJECT"},
@@ -64,14 +64,13 @@ void append_result(
   if (it == state.var_binds->end())
     return;
 
-  // get the index position of the root variable binding from the initial fetch request for this
-  // response variable binding
+  // get the index position of the root variable binding for this response variable binding
   size_t idx = it - state.var_binds->begin();
 
   // Get the last recorded response variable binding for the found root variable binding by looking
   // at the associated next_var_binds slot.  Modulus is used due to partitioning with
   // config.max_var_binds_per_pdu.  WARNING: if ambiguous oids are allowed and they cross partitions,
-  // this will likely pick the wrong index in the partition and, at worst, segfault
+  // this will likely pick the wrong index in the partition and, at worst, segfault.
   oid_t &last_var_bind = state.next_var_binds.front()[
     idx % state.config->max_var_binds_per_pdu
   ];
