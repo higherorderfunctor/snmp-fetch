@@ -60,7 +60,7 @@ class MetaObjectType(type):
         ('#index', np.uint64),
         ('#oid_size', np.uint64),
         ('#result_size', np.uint64),
-        ('#result_type', np.uint64),
+        ('#result_type', np.uint64),  # TODO: value size and type
         ('#timestamp', 'datetime64[s]'),
     ]))
 

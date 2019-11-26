@@ -1,34 +1,19 @@
 /**
- *  type.cpp - Common type definitions.
+ * Common type implementations.
  */
 
-#include <optional>
+#include <numeric>
 
 #include "types.hpp"
 #include "utils.hpp"
 
 namespace netframe::api {
 
-/**
- *  NullVarBind::operator==
- */
-bool NullVarBind::operator==(const NullVarBind &other) {
-  return (
-      (this->oid == other.oid) &
-      (this->oid_size == other.oid_size) &
-      (this->value_size == other.value_size)
-  );
-}
-
-
-/**
- *  NullVarBind::to_string
- */
 std::string NullVarBind::to_string() {
   return str(
       boost::format(
         "NullVarBind("
-        "oid=%1%, "
+        "oid='%1%', "
         "oid_size=%2%, "
         "value_size=%3%)"
       )
@@ -38,120 +23,77 @@ std::string NullVarBind::to_string() {
   );
 }
 
-
-/**
- *  SnmpConfig::operator==
- */
-bool SnmpConfig::operator==(const SnmpConfig &other) {
-  return (
-      (this->retries == other.retries) &
-      (this->timeout == other.timeout) &
-      (this->max_var_binds_per_pdu == other.max_var_binds_per_pdu) &
-      (this->max_bulk_repetitions == other.max_bulk_repetitions)
-  );
-}
-
-
-/**
- *  SnmpConfig::to_string
- */
 std::string SnmpConfig::to_string() {
   return str(
       boost::format(
         "SnmpConfig("
         "retries=%1%, "
         "timeout=%2%, "
-        "max_var_binds_per_pdu=%3%, "
-        "max_bulk_repetitions=%4%)"
+        "var_binds_per_pdu=%3%, "
+        "bulk_repetitions=%4%)"
       )
       % this->retries
       % this->timeout
-      % this->max_var_binds_per_pdu
-      % this->max_bulk_repetitions
+      % this->var_binds_per_pdu
+      % this->bulk_repetitions
   );
 }
 
-
-/**
- *  ObjectIdentityParameter::operator==
- */
-bool ObjectIdentityParameter::operator==(const ObjectIdentityParameter &other) {
-  return (
-      (this->start == other.start) &
-      (this->end == other.end)
-  );
-}
-
-
-/**
- *  ObjectIdentityParameter::to_string
- */
 std::string ObjectIdentityParameter::to_string() {
   return str(
       boost::format(
         "ObjectIdentityParameter("
-        "start=%1%, "
+        "start='%1%', "
         "end=%2%)"
       )
       % oid_to_string(this->start)
-      % (this->end.has_value() ? oid_to_string(*this->end) : "None")
+      % (this->end.has_value() ? "'"+oid_to_string(*this->end)+"'" : "None")
   );
 }
 
-
-/**
- *  Host::operator==
- */
-bool Host::operator==(const Host &other) {
-  return (
-      (this->index == other.index) &
-      (this->communities == other.communities) &
-      //(this->parameters == other.parameters) &
-      (this->config == other.config)
-  );
-}
-
-
-/**
- *  Host::to_string
- */
 std::string Host::to_string() {
+  std::optional<std::list<std::string>> parameters = {};
+  if (this->parameters.has_value() && !this->parameters->empty()) {
+    parameters = std::list<std::string>();
+    std::transform(
+      this->parameters->begin(), this->parameters->end(), std::back_inserter(*parameters),
+      [](auto&& parameter) -> std::string { return parameter.to_string(); }
+    );
+  }
   return str(
       boost::format(
         "Host("
         "index=%1%, "
-        "communities=%2%, "
-        "parameters=%3%, "
-        "config=%4%)"
+        "hostname='%2%', " 
+        "communities=%3%, "
+        "parameters=%4%, "
+        "config=%5%)"
       )
       % this->index
-      % "TODO"//% this->communities
-      % "TODO"//% (this->parameters.has_value() ? (*this->parameters).to_string() : "None")
+      % this->hostname
+      % ("[" + (
+        !this->communities.empty()
+        ? std::accumulate(
+          next(this->communities.begin()), this->communities.end(),
+          "'"+this->communities.front()+"'",
+          [](auto&& lhs, auto&& rhs) -> std::string { return lhs + ", '" + rhs + "'"; }
+        )
+       : ""
+      ) + "]")
+      % (
+        parameters.has_value()
+        ? (
+          "[" + std::accumulate(
+          next(parameters->begin()), parameters->end(), parameters->front(),
+            [](auto&& lhs, auto&& rhs) -> std::string { return lhs + ", " + rhs; }
+          ) + "]"
+        )
+        : "None"
+      )
       % (this->config.has_value() ? (*this->config).to_string() : "None")
   );
 }
 
-
-/**
- *  SnmpError::operator==
- */
-bool SnmpError::operator==(const SnmpError &other) {
-  return (
-      (this->type == other.type) &
-      //(this->host == other.host) &
-      (this->sys_errno == other.sys_errno) &
-      (this->snmp_errno == other.snmp_errno) &
-      (this->err_stat == other.err_stat) &
-      (this->err_index == other.err_index) &
-      (this->err_oid == other.err_oid) &
-      (this->message == other.message)
-  );
-}
-
-
-/**
-  *  SnmpError::to_string
-  */
 std::string SnmpError::to_string() {
   std::string type_string = "UNKNOWN_ERROR";
   switch (this->type) {
@@ -202,12 +144,7 @@ std::string SnmpError::to_string() {
       % (this->snmp_errno.has_value() ? std::to_string(*this->snmp_errno) : "None")
       % (this->err_stat.has_value() ? std::to_string(*this->err_stat) : "None")
       % (this->err_index.has_value() ? std::to_string(*this->err_index) : "None")
-      % (
-        this->err_oid.has_value() ? "'" + oid_to_string(
-          (*this->err_oid).data(),
-          (*this->err_oid).size()
-        ) + "'" : "None"
-      )
+      % (this->err_oid.has_value() ? "'" + oid_to_string(*this->err_oid) + "'" : "None")
       % (this->message.has_value() ? "'" + *this->message + "'" : "None")
   );
 }

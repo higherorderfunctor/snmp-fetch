@@ -10,12 +10,12 @@ namespace netframe::api {
  *  async_sessions_send
  */
 void async_sessions_send(
-    std::list<async_state> &sessions,
+    std::list<AsyncState> &state,
     netsnmp_callback cb
 ) {
 
-    // iterate through each session
-    for (auto &&st: sessions) {
+    // iterate through each state
+    for (auto &&st: state) {
       // skip session that are not idle
       if (st.async_status != ASYNC_IDLE)
         continue;
@@ -88,11 +88,11 @@ void async_sessions_send(
  *  async_sessions_read
  */
 void async_sessions_read(
-    std::list<async_state> &sessions
+    std::list<AsyncState> &states
 ) {
 
     // iterate through each session
-    for (auto &&st: sessions) {
+    for (auto &&st: states) {
       // Check that the session is not idle.  This function triggers the callback which is
       // responsible for setting the status.  A state other than ASYNC_IDLE indicates the
       // response PDU has not been read and processed.
@@ -142,8 +142,8 @@ void async_sessions_read(
 void
 run(
     int pdu_type,
-    std::vector<host_t> &hosts,
-    std::vector<var_bind_t> &var_binds,
+    std::vector<Host> &hosts,
+    std::vector<NullVarBind> &var_binds,
     std::vector<std::vector<uint8_t>> &results,
     std::vector<SnmpError> &errors,
     SnmpConfig &config
@@ -154,14 +154,14 @@ run(
 
   // init a list of pending hosts in reverse to work back to front to reduce copies as hosts are
   // removed
-  std::vector<host_t> pending_hosts(hosts.size());
+  std::vector<Host> pending_hosts(hosts.size());
   std::reverse_copy(hosts.begin(), hosts.end(), pending_hosts.begin());
 
   // Define an active sessions list which MUST be a data structure which does not move the
   // memory location of the sessions.  net-snmp will store the location of the session via a
   // pointer once the PDU is sent.  Using a vector could cause the memory to move as sessions
   // are removed.  Sessions will last multiple iterations of the event loop during retries.
-  std::list<async_state> active_sessions;
+  std::list<AsyncState> active_sessions;
 
   // run the event loop until no pending hosts/active sessions are left
   while (!(pending_hosts.empty() && active_sessions.empty())) {

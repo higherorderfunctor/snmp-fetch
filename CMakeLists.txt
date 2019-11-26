@@ -39,6 +39,7 @@ ExternalProject_Add(netsnmp
 # add pybind11
 file(GLOB PYBIND11_DIR_FILES lib/pybind11/)
 list(LENGTH PYBIND11_DIR_FILES PYBIND11_EMPTY)
+# force clone if the directory is empty (happens when this package is installed directly from git via  a package manager)
 if(PYBIND11_EMPTY EQUAL 0)
   file(REMOVE_RECURSE lib/pybind11)
   execute_process(
@@ -48,20 +49,19 @@ if(PYBIND11_EMPTY EQUAL 0)
 endif()
 add_subdirectory(lib/pybind11)
 
-# define the net-snmp library
+# define net-snmp library
 add_library(libnetsnmp STATIC IMPORTED)
 set_target_properties(libnetsnmp PROPERTIES
   POSITION_INDEPENDENT_CODE ON
   IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/libnetsnmp${CMAKE_STATIC_LIBRARY_SUFFIX}
 )
 
-# define the python module
+# define python module
 pybind11_add_module(api
   snmp_fetch/api/module.cpp
-  snmp_fetch/api/asyncio.cpp
-  snmp_fetch/api/debug.cpp
-  snmp_fetch/api/results.cpp
-  snmp_fetch/api/session.cpp
+  #snmp_fetch/api/asyncio.cpp
+  #snmp_fetch/api/results.cpp
+  #snmp_fetch/api/session.cpp
   snmp_fetch/api/types.cpp
   snmp_fetch/api/utils.cpp
 )
@@ -78,7 +78,6 @@ add_dependencies(api
 
 if(BUILD_TESTING)
 
-  # testing
   enable_testing()
 
   # add Catch2 for testing
@@ -90,10 +89,9 @@ if(BUILD_TESTING)
   add_executable(test_api EXCLUDE_FROM_ALL
     tests/api/test_api.cpp
     snmp_fetch/api/module.cpp
-    snmp_fetch/api/asyncio.cpp
-    snmp_fetch/api/debug.cpp
-    snmp_fetch/api/results.cpp
-    snmp_fetch/api/session.cpp
+    # snmp_fetch/api/asyncio.cpp
+    # snmp_fetch/api/results.cpp
+    # snmp_fetch/api/session.cpp
     snmp_fetch/api/types.cpp
     snmp_fetch/api/utils.cpp
   )
@@ -111,7 +109,7 @@ if(BUILD_TESTING)
     PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov OpenSSL::Crypto
   )
 
-  # add the test cases to CTest
+  # add test cases to CTest
   include(CTest)
   include(${CATCH_SOURCE_DIR}/contrib/Catch.cmake)
   catch_discover_tests(test_api)

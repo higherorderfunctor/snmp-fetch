@@ -1,12 +1,11 @@
 /**
- *  type.hpp - Common type definitions.
+ * Common type definitions.
  */
 
 #ifndef NETFRAME__API__TYPES_H
 #define NETFRAME__API__TYPES_H
 
 #include <list>
-#include <iostream>
 #include <boost/format.hpp>
 
 extern "C" {
@@ -14,16 +13,14 @@ extern "C" {
 #include <net-snmp/net-snmp-includes.h>
 }
 
-#include "utils.hpp"
-
 namespace netframe::api {
 
 // default values
 #define DEFAULT_MAX_ACTIVE_SESSIONS 10
 #define DEFAULT_RETRIES 3
 #define DEFAULT_TIMEOUT 3
-#define DEFAULT_MAX_VAR_BINDS_PER_PDU 10
-#define DEFAULT_MAX_BULK_REPETITIONS 10
+#define DEFAULT_VAR_BINDS_PER_PDU 10
+#define DEFAULT_BULK_REPETITIONS 10
 
 
 // type aliases
@@ -31,45 +28,19 @@ using ObjectIdentity = std::vector<uint64_t>;
 
 
 /**
- *  AsyncStatus - Different statuses of an asynchronous session.
- */
-enum AsyncStatus {
-  ASYNC_IDLE = 0,
-  ASYNC_WAITING,
-  ASYNC_RETRY
-};
-
-
-/**
- *  PduType - SNMP PDU types.
- */
-enum PduType {
-    GET = SNMP_MSG_GET,
-    NEXT= SNMP_MSG_GETNEXT,
-    BULKGET = SNMP_MSG_GETBULK,
-};
-
-
-/**
- *  NullVarBind - ObjectIdentity and buffer sizes for a null variable binding to be filled.
+ * ObjectIdentity and buffer sizes for an empty variable binding.
+ *
+ * Buffer sizes are in bytes and padded to 64bits.
  */
 struct NullVarBind {
   ObjectIdentity oid;
-  uint64_t oid_size;
-  uint64_t value_size;
-
+  uint64_t oid_size;  // in bytes
+  uint64_t value_size;  // in bytes
+  
   /**
-   *  NullVarBind::operator== - Compare two null variable bindings by value.
+   * Convert a NullVarBind to a string.
    *
-   *  @param other The other SnmpConfig to compare.
-   *  @return      Boolean indicating if the other NullVarBind equals this one.
-   */
-  bool operator==(const NullVarBind &other);
-
-  /**
-   *  to_string - String method used for __str__ and __repr__ which mimics attrs.
-   *
-   *  @return String representation of a NullVarBind.
+   * @return String representation of a NullVarBind.
    */
   std::string to_string();
 
@@ -77,27 +48,37 @@ struct NullVarBind {
 
 
 /**
- *  SnmpConfig - SNMP configuration.
+ * Compare two NullVarBinds by value.
+ *
+ * @param lhs Left hand-side NullVarBind to compare.
+ * @param rhs Right hand-side NullVarBind to compare.
+ * @return    Boolean indicating if the left-hand side NullVarBind equals the right-hand side
+ *            NullVarBind.
+ */
+inline bool
+operator==(const NullVarBind& lhs, const NullVarBind &rhs) {
+  return (
+      (lhs.oid == rhs.oid) &
+      (lhs.oid_size == rhs.oid_size) &
+      (lhs.value_size == rhs.value_size)
+  );
+}
+
+
+/**
+ * SNMP configuration definition.
  */
 struct SnmpConfig {
 
   ssize_t retries;
   ssize_t timeout;
-  size_t max_var_binds_per_pdu;
-  size_t max_bulk_repetitions;
+  size_t var_binds_per_pdu;
+  size_t bulk_repetitions;
 
   /**
-   *  SnmpConfig::operator== - Compare two SNMP configurations by value.
+   * Convert an SnmpConfig to a string.
    *
-   *  @param other The other SnmpConfig to compare.
-   *  @return      Boolean indicating if the other SnmpConfig equals this SnmpConfig.
-   */
-  bool operator==(const SnmpConfig &other);
-
-  /**
-   *  to_string - String method used for __str__ and __repr__ which mimics attrs.
-   *
-   *  @return String representation of a SnmpConfig.
+   * @return String representation of a SnmpConfig.
    */
   std::string to_string();
 
@@ -105,7 +86,26 @@ struct SnmpConfig {
 
 
 /**
- *  ObjectIdentityParameter - Start and optional end ObjectIdentity parameter.
+ * Compare two SnmpConfigs by value.
+ *
+ * @param lhs Left hand-side SnmpConfig to compare.
+ * @param rhs Right hand-side SnmpConfig to compare.
+ * @return    Boolean indicating if the left-hand side SnmpConfig equals the right-hand side
+ *            SnmpConfig.
+ */
+inline bool
+operator==(const SnmpConfig& lhs, const SnmpConfig &rhs) {
+  return (
+      (lhs.retries == rhs.retries) &
+      (lhs.timeout == rhs.timeout) &
+      (lhs.var_binds_per_pdu == rhs.var_binds_per_pdu) &
+      (lhs.bulk_repetitions == rhs.bulk_repetitions)
+  );
+}
+
+
+/**
+ * Start and optional end ObjectIdentity parameter.
  */
 struct ObjectIdentityParameter {
 
@@ -113,17 +113,9 @@ struct ObjectIdentityParameter {
   std::optional<ObjectIdentity> end;
 
   /**
-   *  ObjectIdentityParameter::operator== - Compare two object identity parameters by value.
+   * Convert an ObjectIdentityParameter to a string.
    *
-   *  @param other The other ObjectIdentityParameter to compare.
-   *  @return      Boolean indicating if the other Parameter equals this Parameter.
-   */
-  bool operator==(const ObjectIdentityParameter &other);
-
-  /**
-   *  to_string - String method used for __str__ and __repr__ which mimics attrs.
-   *
-   *  @return String representation of a ObjectIdentityParameter.
+   * @return String representation of a ObjectIdentityParameter.
    */
   std::string to_string();
 
@@ -131,9 +123,27 @@ struct ObjectIdentityParameter {
 
 
 /**
- *  Host - Host configuration.
+ * Compare two ObjectIdentityParameters by value.
+ *
+ * @param lhs Left hand-side ObjectIdentityParameter to compare.
+ * @param rhs Right hand-side ObjectIdentityParameter to compare.
+ * @return    Boolean indicating if the left-hand side ObjectIdentityParameter equals the
+ *            right-hand side ObjectIdentityParameter.
+ */
+inline bool
+operator==(const ObjectIdentityParameter& lhs, const ObjectIdentityParameter &rhs) {
+  return (
+      (lhs.start == rhs.start) &
+      (lhs.end == rhs.end)
+  );
+}
+
+
+/**
+ * Host configuration.
  */
 struct Host {
+
   uint64_t index;
   std::string hostname;
   std::list<std::string> communities;
@@ -141,24 +151,36 @@ struct Host {
   std::optional<SnmpConfig> config;
 
   /**
-   *  Host::operator== - Compare two host configurations by value.
+   * Convert a Host to a string.
    *
-   *  @param other The other host to compare.
-   *  @return      Boolean indicating if the other host equals this host.
-   */
-  bool operator==(const Host &other);
-
-  /**
-   *  to_string - String method used for __str__ and __repr__ which mimics attrs.
-   *
-   *  @return String representation of a Host.
+   * @return String representation of a Host.
    */
   std::string to_string();
+
 };
 
 
 /**
- *  SnmpErrorType - SNMP error types.
+ * Compare two Hosts by value.
+ *
+ * @param lhs Left hand-side Host to compare.
+ * @param rhs Right hand-side Host to compare.
+ * @return    Boolean indicating if the left-hand side Host equals the right-hand side Host.
+ */
+inline bool
+operator==(const Host& lhs, const Host &rhs) {
+  return (
+      (lhs.index == rhs.index) &
+      (lhs.hostname == rhs.hostname) &
+      (lhs.communities == rhs.communities) &
+      (lhs.parameters == rhs.parameters) &
+      (lhs.config == rhs.config)
+  );
+}
+
+
+/**
+ * SNMP error types.
  */
 enum SnmpErrorType {
     SESSION_ERROR = 0,
@@ -174,7 +196,7 @@ enum SnmpErrorType {
 
 
 /**
- *  SnmpError - SNMP error.
+ * SNMP error definition.
  */
 struct SnmpError {
 
@@ -188,17 +210,9 @@ struct SnmpError {
   std::optional<std::string> message;
 
   /**
-   *  SnmpError::operator== - Compare two SNMP errors by value.
+   * Convert an SnmpError to a string.
    *
-   *  @param other The other SnmpError to compare.
-   *  @return      Boolean indicating if the other SnmpError equals this SnmpError.
-   */
-  bool operator==(const SnmpError &other);
-
-  /**
-   *  to_string - String method used for __str__ and __repr__ which mimics attrs.
-   *
-   *  @return String representation of an SnmpError.
+   * @return String representation of an SnmpError.
    */
   std::string to_string();
 
@@ -206,18 +220,61 @@ struct SnmpError {
 
 
 /**
- *  AsyncState - State wrapper for net-snmp sessions and callbacks.
+ * Compare two SnmpErrors by value.
+ *
+ * @param lhs Left hand-side SnmpError to compare.
+ * @param rhs Right hand-side SnmpError to compare.
+ * @return    Boolean indicating if the left-hand side SnmpError equals the right-hand side
+ *            SnmpError.
+ */
+inline bool
+operator==(const SnmpError& lhs, const SnmpError &rhs) {
+  return (
+      (lhs.type == rhs.type) &
+      (lhs.host == rhs.host) &
+      (lhs.sys_errno == rhs.sys_errno) &
+      (lhs.snmp_errno == rhs.snmp_errno) &
+      (lhs.err_stat == rhs.err_stat) &
+      (lhs.err_index == rhs.err_index) &
+      (lhs.err_oid == rhs.err_oid) &
+      (lhs.message == rhs.message)
+  );
+}
+
+
+/**
+ * Different statuses of an asynchronous session.
+ */
+enum AsyncStatus {
+  ASYNC_IDLE = 0,
+  ASYNC_WAITING,
+  ASYNC_RETRY
+};
+
+
+/**
+ * SNMP PDU types.
+ */
+enum PduType {
+    GET = SNMP_MSG_GET,
+    NEXT= SNMP_MSG_GETNEXT,
+    BULKGET = SNMP_MSG_GETBULK,
+};
+
+
+/**
+ * State wrapper for net-snmp callback functions.
  */
 struct AsyncState {
   AsyncStatus async_status;
   void *session;
-  int pdu_type;
+  PduType pdu_type;
   Host host;
   std::vector<NullVarBind> *var_binds;
   std::vector<std::vector<NullVarBind>> next_var_binds;
   std::vector<std::vector<uint8_t>> *results;
   std::vector<SnmpError> *errors;
-  SnmpConfig *config;
+  std::optional<SnmpConfig> config;
 };
 
 }

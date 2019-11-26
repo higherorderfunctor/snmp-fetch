@@ -18,7 +18,7 @@ namespace netframe::api {
  *  @param callback Pointer to a callback function once the async request is completed.
  */
 void async_sessions_send(
-    std::list<async_state> &sessions,
+    std::list<AsyncState> &sessions,
     netsnmp_callback cb
 );
 
@@ -30,7 +30,7 @@ void async_sessions_send(
  *  each for response PDUs which triggers the callback function on the session.
  */
 void async_sessions_read(
-    std::list<async_state> &sessions
+    std::list<AsyncState> &sessions
 );
 
 
@@ -42,15 +42,16 @@ void async_sessions_read(
  *  @param var_binds Reference to the variable for collection.
  *  @param results   Reference to the results collected.
  *  @param errors    Reference to the errors collected.
+ *  @param config    Default SNMP config.
  */
 void
 run(
     int pdu_type,
-    std::vector<host_t> &hosts,
-    std::vector<var_bind_t> &var_binds,
+    std::vector<Host> &hosts,
+    std::vector<NullVarBind> &var_binds,
     std::vector<std::vector<uint8_t>> &results,
     std::vector<SnmpError> &errors,
-    SnmpConfig &config
+    std::optional<SnmpConfig> config
 );
 
 }

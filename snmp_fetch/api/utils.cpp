@@ -1,16 +1,11 @@
 /**
- *  utils.cpp - Utility functions.
- *
- *  To avoid circular imports, this file should not depend on any other imports from this project.
+ * Utility function implementations.
  */
 
 #include "utils.hpp"
 
 namespace netframe::api {
 
-/**
- *  oid_to_string
- */
 std::string
 oid_to_string(uint64_t *oid, size_t oid_size) {
   std::ostringstream os;
@@ -18,10 +13,6 @@ oid_to_string(uint64_t *oid, size_t oid_size) {
   return os.str();
 }
 
-
-/**
- *  oid_to_string
- */
 std::string
 oid_to_string(std::vector<uint64_t> &oid) {
   std::ostringstream os;

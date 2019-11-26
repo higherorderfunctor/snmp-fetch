@@ -23,12 +23,12 @@ print_oid(uint64_t *oid, size_t oid_size);
 
 
 /**
- *  print_session - Debug print state wrapped net-snmp session.
+ *  print_async_state - Debug print an AsyncState.
  *
- *  @param session Reference to the state wrapped net-snmp session.
+ *  @param session Reference to an AsyncState.
  */
 void
-print_session(async_state &session);
+print_async_state(AsyncState &state);
 
 }
 

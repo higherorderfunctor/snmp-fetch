@@ -28,7 +28,7 @@ namespace netframe::api {
  */
 void *
 create_netsnmp_session(
-    host_t &host,
+    Host &host,
     std::vector<SnmpError> &errors,
     SnmpConfig &config
 );
@@ -48,12 +48,12 @@ create_netsnmp_session(
  */
 void create_session(
     int pdu_type,
-    host_t &host,
-    std::vector<var_bind_t> &var_binds,
+    Host &host,
+    std::vector<NullVarBind> &var_binds,
     std::vector<std::vector<uint8_t>> &results,
     std::vector<SnmpError> &errors,
     SnmpConfig &config,
-    std::list<async_state> &sessions
+    std::list<AsyncState> &states
 );
 
 
@@ -72,7 +72,7 @@ void create_session(
  *                  completed sessions from this list.
  */
 void close_completed_sessions(
-    std::list<async_state> &sessions
+    std::list<AsyncState> &states
 );
 
 }

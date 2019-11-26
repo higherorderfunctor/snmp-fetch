@@ -29,7 +29,7 @@ namespace netframe::api {
  */
 void append_result(
     variable_list &resp_var_bind,
-    async_state &state
+    AsyncState &state
 );
 
 

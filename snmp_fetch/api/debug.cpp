@@ -20,15 +20,15 @@ print_oid(uint64_t *oid, size_t oid_size) {
 
 
 /**
- *  print_session
+ *  print_async_state
  */
 void
-print_session(async_state &session) {
+print_async_state(AsyncState &state) {
   std::cout << "----------------------------------------" << std::endl;
-  std::cout << "ASYNC_STATUS: " << session.async_status << std::endl;
-  std::cout << "HOST: " << std::get<0>(session.host) << std::endl;
-  std::cout << "VAR_BINDS: " << session.var_binds->size() << std::endl;
-  std::cout << "NEXT_VAR_BINDS: " << session.next_var_binds.size() << std::endl;
+  std::cout << "ASYNC_STATUS: " << state.async_status << std::endl;
+  std::cout << "HOST: " << state.host.to_string() << std::endl;
+  std::cout << "VAR_BINDS: " << state.var_binds->size() << std::endl;
+  std::cout << "NEXT_VAR_BINDS: " << state.next_var_binds.size() << std::endl;
   std::cout << "----------------------------------------" << std::endl;
 }
 
