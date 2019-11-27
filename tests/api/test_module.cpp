@@ -7,7 +7,8 @@
 
 TEST_CASE( "Test timeout", "[module]" ) {
 
-  py::module sys = py::module::import("snmp_fetch.api");
+  py::module api = py::module::import("snmp_fetch.api");
+  py::print(api.attr("PduType"));
   /*
   std::vector<host_t> hosts = {
     std::make_tuple(0, "localhost", "public")

@@ -8,6 +8,7 @@ notifications:
   webhooks: https://coveralls.io/webhook
 
 env:
+  - NETFRAME_COVERAGE
   - COVERALLS_PARALLEL=true
 
 matrix:
@@ -34,7 +35,7 @@ install:
   - pip install poetry
   - mkdir -p build/temp.linux-x86_64-3.7
   - pushd build/temp.linux-x86_64-3.7
-  - cmake -DBUILD_TESTING=ON ../.. && make VERBOSE=1 all test_api  # force build output hidden by poetry
+  - cmake -DBUILD_TESTING=ON ../.. && make VERBOSE=1 all # force build output hidden by poetry
   - popd
   - poetry install -vvv
   - pip install cpp-coveralls python-coveralls
@@ -45,10 +46,7 @@ script:
   #- poetry run mypy -p snmp_fetch -p tests
   #- poetry run bandit -r snmp_fetch
   #- poetry run pytest -v --cov --hypothesis-show-statistics tests
-  - pushd build/temp.linux-x86_64-3.7
-  - make test  # run C++ tests
-  - popd
 
 after_success:
-  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-3.7 --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
+  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-3.7/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
   - coveralls --merge_file cpp-coveralls.json

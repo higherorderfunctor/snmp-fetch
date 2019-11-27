@@ -83,7 +83,7 @@ Development
 .. code:: console
 
    # C++ headers are in the following folders for linters
-   export CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include:lib/Catch2/single_include/catch2:lib/boost"
+   export CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include:lib/boost"
 
    # python linting
    poetry run isort -rc --atomic .
@@ -91,19 +91,13 @@ Development
    poetry run flake8 snmp_fetch tests
    poetry run mypy -p snmp_fetch -p tests
    poetry run bandit -r snmp_fetch
+   # C++ TODO
 
-   # C++ linting
-   # TODO
-
-   # python testing
+   # testing
    poetry run pytest -v --hypothesis-show-statistics tests
    # fail fast testing
    poetry run pytest -x --ff tests
 
-   # C++ testing
-   pushd build/temp.linux-x86_64-3.7/
-   cmake -DBUILD_TESTING=ON ../.. && make test_api test
-   popd
 
 Upgrading Dependencies
 ----------------------
@@ -124,7 +118,6 @@ Upgrading Dependencies
    bin.v2/tools/bcp/gcc-8/release/link-static/bcp LICENSE_1_0.txt boost/format.hpp boost/range/combine.hpp ../lib/boost
    cd ..
    rm -rf boost_X_Y_Z*
-
 
 
 Known Limitations
