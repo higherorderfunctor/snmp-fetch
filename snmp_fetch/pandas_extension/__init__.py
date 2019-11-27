@@ -143,7 +143,7 @@ class InetSeriesAccessor:
                     ip.IPv6Address(cuint8_to_int(buffer[:16])),
                     cuint8_to_int(buffer[16:])
                 )
-            raise TypeError('Datatype not understood')
+            raise TypeError(f'INET Address size not understood: {buffer}')
         return pd.DataFrame(
             self.obj.apply(_to_inet_address).tolist(),
             columns=list(column_names(2)),
