@@ -2,13 +2,15 @@
 
 #include "../../snmp_fetch/api/types.hpp"
 
+using namespace netframe::api;
+
 TEST_CASE( "Test NullVarBind", "[types]" ) {
 
-  netframe::api::NullVarBind var_bind = {
+  NullVarBind var_bind = {
       { 0, 1, 2, 3, 4 }, 256, 512
   };
 
-  REQUIRE( var_bind.oid == (netframe::api::ObjectIdentity) { 0, 1, 2, 3, 4 } );
+  REQUIRE( var_bind.oid == (ObjectIdentity) { 0, 1, 2, 3, 4 } );
   REQUIRE( var_bind.oid_size == 256 );
   REQUIRE( var_bind.value_size == 512 );
 
@@ -35,7 +37,7 @@ TEST_CASE( "Test NullVarBind", "[types]" ) {
 
 TEST_CASE( "Test SnmpConfig", "[types]" ) {
 
-  netframe::api::SnmpConfig config = { 0, 1, 2, 3 };
+  SnmpConfig config = { 0, 1, 2, 3 };
 
   REQUIRE( config.retries == 0 );
   REQUIRE( config.timeout == 1 );
@@ -68,12 +70,12 @@ TEST_CASE( "Test SnmpConfig", "[types]" ) {
 
 TEST_CASE( "Test ObjectIdentityParameter", "[types]" ) {
 
-  netframe::api::ObjectIdentityParameter parameter = {
+  ObjectIdentityParameter parameter = {
     { 0, 1, 2, 3 }, { { 4, 5, 6, 7} }
   };
 
-  REQUIRE( parameter.start == (netframe::api::ObjectIdentity) { 0, 1, 2, 3 } );
-  REQUIRE( parameter.end == (netframe::api::ObjectIdentity) { 4, 5, 6, 7} );
+  REQUIRE( parameter.start == (ObjectIdentity) { 0, 1, 2, 3 } );
+  REQUIRE( parameter.end == (ObjectIdentity) { 4, 5, 6, 7} );
 
   REQUIRE( parameter.to_string() == "ObjectIdentityParameter(start='.0.1.2.3', end='.4.5.6.7')" );
 
@@ -96,14 +98,14 @@ TEST_CASE( "Test ObjectIdentityParameter", "[types]" ) {
 
 TEST_CASE( "Test Host", "[types]" ) {
 
-  netframe::api::Host host = {
+  Host host = {
     1, "2", { "3" }, { { { { 0, 1, 2, 3 }, { } } } }, { { 0, 1, 2, 3 } }
   };
 
   REQUIRE( host.index == 1 );
   REQUIRE( host.hostname == "2" );
-  REQUIRE( host.parameters == (std::list<netframe::api::ObjectIdentityParameter>) { { { 0, 1, 2, 3 }, { } } } );
-  REQUIRE( host.config == (netframe::api::SnmpConfig) { 0, 1, 2, 3 } );
+  REQUIRE( host.parameters == (std::list<ObjectIdentityParameter>) { { { 0, 1, 2, 3 }, { } } } );
+  REQUIRE( host.config == (SnmpConfig) { 0, 1, 2, 3 } );
 
   REQUIRE( host.to_string() == "Host(index=1, hostname='2', communities=['3'], parameters=[ObjectIdentityParameter(start='.0.1.2.3', end=None)], config=SnmpConfig(retries=0, timeout=1, var_binds_per_pdu=2, bulk_repetitions=3))" );
 
@@ -136,7 +138,7 @@ TEST_CASE( "Test Host", "[types]" ) {
 
   REQUIRE( host2.to_string() == "Host(index=1, hostname='2', communities=['3'], parameters=None, config=SnmpConfig(retries=0, timeout=1, var_binds_per_pdu=2, bulk_repetitions=3))" );
 
-  host2.parameters = (std::list<netframe::api::ObjectIdentityParameter>) { };
+  host2.parameters = (std::list<ObjectIdentityParameter>) { };
 
   REQUIRE( host2.to_string() == "Host(index=1, hostname='2', communities=['3'], parameters=None, config=SnmpConfig(retries=0, timeout=1, var_binds_per_pdu=2, bulk_repetitions=3))" );
 
@@ -156,13 +158,13 @@ TEST_CASE( "Test Host", "[types]" ) {
 
 TEST_CASE( "Test SnmpError", "[types]" ) {
 
-  netframe::api::SnmpError error = {
-    netframe::api::SESSION_ERROR, { 1, "2", { }, { }, { } },
+  SnmpError error = {
+    SESSION_ERROR, { 1, "2", { }, { }, { } },
     3, 4, 5, 6, { { 7, 8 } }, "Test"
   };
 
-  REQUIRE( error.type == netframe::api::SESSION_ERROR );
-  REQUIRE( error.host == (netframe::api::Host) { 1, "2", { }, { }, { } } );
+  REQUIRE( error.type == SESSION_ERROR );
+  REQUIRE( error.host == (Host) { 1, "2", { }, { }, { } } );
 
   REQUIRE( error.to_string() == "SnmpError(type=SESSION_ERROR, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 
@@ -170,37 +172,37 @@ TEST_CASE( "Test SnmpError", "[types]" ) {
 
   REQUIRE( error == error2 );
 
-  error2.type = netframe::api::CREATE_REQUEST_PDU_ERROR;
+  error2.type = CREATE_REQUEST_PDU_ERROR;
 
   REQUIRE( !(error == error2) );
 
   REQUIRE( error2.to_string() == "SnmpError(type=CREATE_REQUEST_PDU_ERROR, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 
-  error2.type = netframe::api::SEND_ERROR;
+  error2.type = SEND_ERROR;
 
   REQUIRE( error2.to_string() == "SnmpError(type=SEND_ERROR, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 
-  error2.type = netframe::api::BAD_RESPONSE_PDU_ERROR;
+  error2.type = BAD_RESPONSE_PDU_ERROR;
 
   REQUIRE( error2.to_string() == "SnmpError(type=BAD_RESPONSE_PDU_ERROR, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 
-  error2.type = netframe::api::TIMEOUT_ERROR;
+  error2.type = TIMEOUT_ERROR;
 
   REQUIRE( error2.to_string() == "SnmpError(type=TIMEOUT_ERROR, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 
-  error2.type = netframe::api::ASYNC_PROBE_ERROR;
+  error2.type = ASYNC_PROBE_ERROR;
 
   REQUIRE( error2.to_string() == "SnmpError(type=ASYNC_PROBE_ERROR, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 
-  error2.type = netframe::api::TRANSPORT_DISCONNECT_ERROR;
+  error2.type = TRANSPORT_DISCONNECT_ERROR;
 
   REQUIRE( error2.to_string() == "SnmpError(type=TRANSPORT_DISCONNECT_ERROR, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 
-  error2.type = netframe::api::CREATE_RESPONSE_PDU_ERROR;
+  error2.type = CREATE_RESPONSE_PDU_ERROR;
 
   REQUIRE( error2.to_string() == "SnmpError(type=CREATE_RESPONSE_PDU_ERROR, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 
-  error2.type = netframe::api::VALUE_WARNING;
+  error2.type = VALUE_WARNING;
 
   REQUIRE( error2.to_string() == "SnmpError(type=VALUE_WARNING, host=Host(index=1, hostname='2', communities=[], parameters=None, config=None), sys_errno=3, snmp_errno=4, err_stat=5, err_index=6, err_oid='.7.8', message='Test')" );
 

@@ -24,7 +24,7 @@ as_pyarray(Sequence& seq) {
 }
 
 std::tuple<std::vector<py::array_t<uint8_t>>, std::vector<SnmpError>>
-collect(
+snmp(
     PduType pdu_type,
     std::vector<Host> hosts,
     std::vector<NullVarBind> var_binds,
@@ -221,7 +221,7 @@ PYBIND11_MODULE(api, m) {
 // 
 
   m.def(
-      "collect", &collect, "Collect SNMP objects from remote devices",
+      "snmp", &snmp, "Collect SNMP objects from remote devices",
       py::arg("pdu_type"),
       py::arg("hosts"),
       py::arg("var_binds"),

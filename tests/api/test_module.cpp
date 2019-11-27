@@ -1,12 +1,14 @@
 #include "catch.hpp"
 #include "../../snmp_fetch/api/module.hpp"
 
-namespace py = pybind11;
+//namespace py = pybind11;
 
-using namespace snmp_fetch;
+//using namespace snmp;
 
-TEST_CASE( "Test timeout", "[fetch]" ) {
+TEST_CASE( "Test timeout", "[module]" ) {
 
+  py::module sys = py::module::import("snmp_fetch.api");
+  /*
   std::vector<host_t> hosts = {
     std::make_tuple(0, "localhost", "public")
   };
@@ -23,5 +25,7 @@ TEST_CASE( "Test timeout", "[fetch]" ) {
   REQUIRE( results[0].size() == 0 );
   REQUIRE( errors.size() == 1 );
   REQUIRE( errors[0].type == TIMEOUT_ERROR );
+  */
+  REQUIRE ( true == false );
 
 }

@@ -87,13 +87,16 @@ if(BUILD_TESTING)
 
   # define the test application
   add_executable(test_api EXCLUDE_FROM_ALL
-    tests/api/test_api.cpp
-    snmp_fetch/api/module.cpp
     # snmp_fetch/api/asyncio.cpp
+    snmp_fetch/api/module.cpp
     # snmp_fetch/api/results.cpp
     # snmp_fetch/api/session.cpp
     snmp_fetch/api/types.cpp
     snmp_fetch/api/utils.cpp
+    tests/api/test_api.cpp
+    tests/api/test_module.cpp
+    tests/api/test_types.cpp
+    tests/api/test_utils.cpp
   )
 
   # add compiler options
