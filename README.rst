@@ -91,12 +91,15 @@ Development
    poetry run flake8 snmp_fetch tests
    poetry run mypy -p snmp_fetch -p tests
    poetry run bandit -r snmp_fetch
-   # C++ TODO
+   # TODO: C++ Linting
 
    # testing
    poetry run pytest -v --hypothesis-show-statistics tests
    # fail fast testing
    poetry run pytest -x --ff tests
+
+   # enable coverage
+   export NETFRAME_COVERAGE=1
 
 
 Upgrading Dependencies

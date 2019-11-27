@@ -17,8 +17,6 @@ ProcessorCount(N)
 if(NOT N EQUAL 0)
   set(GIT_CONFIG submodule.fetchJobs=${N})
   set(MAKEFLAGS -j${N})
-  #set(CTEST_BUILD_FLAGS -j${N})
-  #set(ctest_test_args ${ctest_test_args} PARALLEL_LEVEL ${N})
 endif()
 
 # get, build, and install net-snmp
@@ -85,46 +83,3 @@ target_link_libraries(api
 add_dependencies(api
   netsnmp
 )
-
-# if(BUILD_TESTING)
-# 
-#   enable_testing()
-#   
-#   # add Catch2 for testing
-#   set(CATCH_SOURCE_DIR ${PROJECT_SOURCE_DIR}/lib/Catch2)
-#   add_subdirectory(${CATCH_SOURCE_DIR})
-#   include_directories(${CATCH_SOURCE_DIR}/single_include/catch2)
-#   
-#   # define the test application
-#   add_executable(test_api
-#     # snmp_fetch/api/asyncio.cpp
-#     # snmp_fetch/api/module.cpp
-#     # snmp_fetch/api/results.cpp
-#     # snmp_fetch/api/session.cpp
-#     # snmp_fetch/api/types.cpp
-#     # snmp_fetch/api/utils.cpp
-#     tests/api/test_api.cpp
-#     tests/api/test_module.cpp
-#     # tests/api/test_types.cpp
-#     # tests/api/test_utils.cpp
-#   )
-#   
-#   # add compiler options
-#   target_compile_options(test_api PRIVATE -O0)
-#   
-#   # define test dependencies
-#   add_dependencies(test_api
-#     netsnmp
-#   )
-#   
-#   # add test libraries to the test application
-#   target_link_libraries(test_api
-#     PRIVATE Catch2::Catch2 pybind11::embed libnetsnmp gcov OpenSSL::Crypto
-#   )
-#   
-#   # add test cases to CTest
-#   include(CTest)
-#   include(${CATCH_SOURCE_DIR}/contrib/Catch.cmake)
-#   catch_discover_tests(test_api)
-# 
-# endif()

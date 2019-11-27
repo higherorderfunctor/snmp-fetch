@@ -35,7 +35,7 @@ install:
   - pip install poetry
   - mkdir -p build/temp.linux-x86_64-3.7
   - pushd build/temp.linux-x86_64-3.7
-  - cmake -DBUILD_TESTING=ON ../.. && make VERBOSE=1 all # force build output hidden by poetry
+  - cmake ../.. && make VERBOSE=1 all # force build output hidden by poetry
   - popd
   - poetry install -vvv
   - pip install cpp-coveralls python-coveralls
