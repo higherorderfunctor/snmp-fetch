@@ -4,12 +4,8 @@ python:
 cache:
   pip: true
 
-notifications:
-  webhooks: https://coveralls.io/webhook
-
 env:
   - NETFRAME_COVERAGE
-  - COVERALLS_PARALLEL=true
 
 matrix:
   include:
@@ -22,8 +18,8 @@ matrix:
             - g++-8
       env:
         - CC=gcc-8
-        - CXX=g++-8
-        - COV=gcov-8
+          CXX=g++-8
+          COV=gcov-8
       
 before_install:
   - sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
