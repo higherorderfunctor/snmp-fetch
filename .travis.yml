@@ -33,9 +33,7 @@ jobs:
           packages:
             - g++-8
       env:
-        - CC=gcc-8
-          CXX=g++-8
-          COV=gcov-8
+        - CC=gcc-8 CXX=g++-8 COV=gcov-8
 
       
 before_install:
