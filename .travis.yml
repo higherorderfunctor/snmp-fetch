@@ -54,9 +54,9 @@ install:
 script:
   #- poetry run pylint snmp_fetch tests
   #- poetry run flake8 snmp_fetch tests
-  #- poetry run mypy -p snmp_fetch -p tests
+  #- poetry run mypy -p snmp_fetch -p tests  # TODO virtual environment
   #- poetry run bandit -r snmp_fetch
-  #- poetry run pytest -v --cov --hypothesis-show-statistics tests
+  - poetry run pytest -v tests/api/test_snmp_config.py --cov
 
 after_success:
   - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-3.7/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 

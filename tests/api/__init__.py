@@ -1,1 +1,1 @@
-"""API tests."""
+"""C module API tests."""
