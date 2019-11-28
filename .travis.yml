@@ -42,10 +42,13 @@ before_install:
   - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
 
 install:
+  - virtualenv -p python${$TRAVIS_PYTHON_VERSION} ENV
+  - source ENV/bin/activate
   - pip install --upgrade pip
-  - pip install poetry
-  - mkdir -p build/temp.linux-x86_64-3.7
-  - pushd build/temp.linux-x86_64-3.7
+  - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+  - ln -s ~/.poetry/lib/poetry/_vendor/py3.7 ~/.poetry/lib/poetry/_vendor/py3.8
+  - mkdir -p build/temp.linux-x86_64-${$TRAVIS_PYTHON_VERSION}
+  - pushd build/temp.linux-x86_64-${$TRAVIS_PYTHON_VERSION}
   - cmake ../.. && make VERBOSE=1 all # force build output hidden by poetry
   - popd
   - poetry install -vvv
@@ -59,5 +62,5 @@ script:
   - poetry run pytest -v tests/api/test_snmp_config.py --cov
 
 after_success:
-  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-3.7/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
+  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-${$TRAVIS_PYTHON_VERSION}/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
   - coveralls --merge_file cpp-coveralls.json
