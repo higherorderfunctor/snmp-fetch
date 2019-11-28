@@ -20,7 +20,7 @@ jobs:
           packages:
             - g++-8
       env:
-        - PYTHON_VERSION=3.7 CC=gcc-8 CXX=g++-8 COV=gcov-8
+        - BASE_PYTHON_VERSION=3.7 PYTHON_VERSION=3.7.4 CC=gcc-8 CXX=g++-8 COV=gcov-8
     - name: "linux-x86_64-3.8-gcc8"
       os: linux
       python: 3.8
@@ -31,7 +31,7 @@ jobs:
           packages:
             - g++-8
       env:
-        - PYTHON_VERSION=3.8 CC=gcc-8 CXX=g++-8 COV=gcov-8
+        - BASE_PYTHON_VERSION=3.8 PYTHON_VERSION=3.8.0 CC=gcc-8 CXX=g++-8 COV=gcov-8
 
       
 before_install:
@@ -40,13 +40,13 @@ before_install:
   - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
 
 install:
-  - deactivate && virtualenv -p /opt/python/${TRAVIS_PYTHON_VERSION}/python${PYTHON_VERSION} ENV  # use our own virtual environment for mypy stubs
+  - deactivate && virtualenv -p /opt/python/${PYTHON_VERSION}/bin/python${BASE_PYTHON_VERSION} ENV  # use our own virtual environment for mypy stubs
   - source ENV/bin/activate
   - pip install --upgrade pip
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-  - if [[ $PYTHON_VERSION == 3.8 ]]; then ln -s ~/.poetry/lib/poetry/_vendor/py3.7 ~/.poetry/lib/poetry/_vendor/py3.8; fi  # temp fix
-  - mkdir -p build/temp.linux-x86_64-${PYTHON_VERSION}
-  - pushd build/temp.linux-x86_64-${PYTHON_VERSION}
+  - if [[ $BASE_PYTHON_VERSION == 3.8 ]]; then ln -s ~/.poetry/lib/poetry/_vendor/py3.7 ~/.poetry/lib/poetry/_vendor/py3.8; fi  # temp fix
+  - mkdir -p build/temp.linux-x86_64-${BASE_PYTHON_VERSION}
+  - pushd build/temp.linux-x86_64-${BASE_PYTHON_VERSION}
   - cmake ../.. && make VERBOSE=1 all # force build output hidden by poetry
   - popd
   - poetry install -vvv
@@ -55,10 +55,10 @@ install:
 script:
   #- poetry run pylint snmp_fetch tests
   #- poetry run flake8 snmp_fetch tests
-  #- MYPYPATH=stubs/linux-x86_64-${PYTHON_VERSION} poetry run mypy -p snmp_fetch -p tests  # TODO virtual environment
+  #- MYPYPATH=stubs/linux-x86_64-${BASE_PYTHON_VERSION} poetry run mypy -p snmp_fetch -p tests
   #- poetry run bandit -r snmp_fetch
   - poetry run pytest -v tests/api/test_snmp_config.py --cov
 
 after_success:
-  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-${PYTHON_VERSION}/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
+  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-${BASE_PYTHON_VERSION}/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
   - coveralls --merge_file cpp-coveralls.json
