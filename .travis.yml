@@ -47,7 +47,7 @@ install:
   - if [[ $BASE_PYTHON_VERSION == 3.8 ]]; then ln -s ~/.poetry/lib/poetry/_vendor/py3.7 ~/.poetry/lib/poetry/_vendor/py3.8; fi  # temp fix
   - mkdir -p build/temp.linux-x86_64-${BASE_PYTHON_VERSION}
   - pushd build/temp.linux-x86_64-${BASE_PYTHON_VERSION}
-  - cmake ../.. && make VERBOSE=1 all # force build output hidden by poetry
+  - cmake -DPYTHON_EXECUTABLE:FILEPATH=../../ENV/bin/python ../.. && make VERBOSE=1 all # force build output hidden by poetry
   - popd
   - poetry install -vvv
   - pip install cpp-coveralls python-coveralls
