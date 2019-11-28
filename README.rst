@@ -84,6 +84,7 @@ Development
 
    # C++ headers are in the following folders for linters
    export CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include:lib/boost"
+   export MYPYPATH=stubs/linux-x86_64-3.8
 
    # python linting
    poetry run isort -rc --atomic .
