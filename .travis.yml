@@ -40,10 +40,11 @@ before_install:
   - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
 
 install:
-  - deactivate && virtualenv -p /opt/python/${PYTHON_VERSION}/bin/python${BASE_PYTHON_VERSION} ENV  # use our own virtual environment for mypy stubs
+  - deactivate && virtualenv -p /opt/python/$PYTHON_VERSION/bin/python${BASE_PYTHON_VERSION} ENV  # use our own virtual environment for mypy stubs
   - source ENV/bin/activate
   - pip install --upgrade pip
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+  - export PATH="$PATH:$HOME/.poetry/bin"
   - if [[ $BASE_PYTHON_VERSION == 3.8 ]]; then ln -s ~/.poetry/lib/poetry/_vendor/py3.7 ~/.poetry/lib/poetry/_vendor/py3.8; fi  # temp fix
   - mkdir -p build/temp.linux-x86_64-${BASE_PYTHON_VERSION}
   - pushd build/temp.linux-x86_64-${BASE_PYTHON_VERSION}
