@@ -40,7 +40,7 @@ before_install:
   - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
 
 install:
-  - virtualenv -p python${PYTHON_VERSION} ENV  # use our own virtual environment for mypy stubs
+  - deactivate && virtualenv -p python${PYTHON_VERSION} ENV  # use our own virtual environment for mypy stubs
   - source ENV/bin/activate
   - pip install --upgrade pip
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
