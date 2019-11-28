@@ -42,13 +42,13 @@ before_install:
   - sudo ln -s "/usr/bin/${CXX}" /usr/local/bin/g++
 
 install:
-  - virtualenv -p python${$TRAVIS_PYTHON_VERSION} ENV
+  - virtualenv -p python${TRAVIS_PYTHON_VERSION} ENV
   - source ENV/bin/activate
   - pip install --upgrade pip
   - curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-  - ln -s ~/.poetry/lib/poetry/_vendor/py3.7 ~/.poetry/lib/poetry/_vendor/py3.8
-  - mkdir -p build/temp.linux-x86_64-${$TRAVIS_PYTHON_VERSION}
-  - pushd build/temp.linux-x86_64-${$TRAVIS_PYTHON_VERSION}
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.8 ]]; ln -s ~/.poetry/lib/poetry/_vendor/py3.7 ~/.poetry/lib/poetry/_vendor/py3.8; fi  # temp fix
+  - mkdir -p build/temp.linux-x86_64-${TRAVIS_PYTHON_VERSION}
+  - pushd build/temp.linux-x86_64-${TRAVIS_PYTHON_VERSION}
   - cmake ../.. && make VERBOSE=1 all # force build output hidden by poetry
   - popd
   - poetry install -vvv
