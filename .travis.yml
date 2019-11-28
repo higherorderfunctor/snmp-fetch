@@ -62,5 +62,5 @@ script:
   - poetry run pytest -v tests/api/test_snmp_config.py --cov
 
 after_success:
-  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-${$TRAVIS_PYTHON_VERSION}/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
+  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-${TRAVIS_PYTHON_VERSION}/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
   - coveralls --merge_file cpp-coveralls.json
