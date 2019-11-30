@@ -2,13 +2,13 @@
  * Utility function definitions.
  */
 
-#ifndef NETFRAME__API__UTILS_HPP
-#define NETFRAME__API__UTILS_HPP
+#ifndef NETFRAME__SNMP__API__UTILS_HPP
+#define NETFRAME__SNMP__API__UTILS_HPP
 
 #include <sstream>
 #include <vector>
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 /**
  * Convert an ObjectIdentity (pointer format) to a string.

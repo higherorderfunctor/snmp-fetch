@@ -4,7 +4,7 @@
 
 #include "asyncio.hpp"
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 /**
  *  async_sessions_send

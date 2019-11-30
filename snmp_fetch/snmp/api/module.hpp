@@ -1,9 +1,9 @@
 /**
- * Main entry point definition for the python C++ extension.
+ * Main entry point definition for the netframe::snmp::api C++ extension.
  */
 
-#ifndef NETFRAME__API__CAPIMODULE_HPP
-#define NETFRAME__API__CAPIMODULE_HPP
+#ifndef NETFRAME__SNMP__API__MODULE_HPP
+#define NETFRAME__SNMP__API__MODULE_HPP
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -12,7 +12,7 @@
 
 namespace py = pybind11;
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 /**
  * Wraps a C++ sequence in a numpy array.  This object will free the underlying data when the
@@ -54,7 +54,7 @@ snmp(
     PduType pdu_type,
     std::vector<Host> hosts,
     std::vector<NullVarBind> var_binds,
-    std::optional<SnmpConfig> config,
+    std::optional<Config> config,
     uint64_t max_active_sessions
 );
 

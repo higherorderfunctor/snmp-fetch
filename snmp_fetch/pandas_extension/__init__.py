@@ -1,4 +1,4 @@
-"""Extended DataFrame functionality."""
+"""Package of pandas extensions."""
 
 from typing import Any, Iterator, Optional, Sequence, Text, Tuple, Union, cast
 

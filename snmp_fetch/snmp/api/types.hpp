@@ -2,8 +2,8 @@
  * Common type definitions.
  */
 
-#ifndef NETFRAME__API__TYPES_H
-#define NETFRAME__API__TYPES_H
+#ifndef NETFRAME__SNMP__API__TYPES_HPP
+#define NETFRAME__SNMP__API__TYPES_HPP
 
 #include <list>
 #include <boost/format.hpp>
@@ -13,7 +13,7 @@ extern "C" {
 #include <net-snmp/net-snmp-includes.h>
 }
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 // default values
 #define DEFAULT_MAX_ACTIVE_SESSIONS 10
@@ -25,6 +25,16 @@ namespace netframe::api {
 
 // type aliases
 using ObjectIdentity = std::vector<uint64_t>;
+
+
+/**
+ * SNMP PDU types.
+ */
+enum PduType {
+    GET = SNMP_MSG_GET,
+    NEXT= SNMP_MSG_GETNEXT,
+    BULKGET = SNMP_MSG_GETBULK,
+};
 
 
 /**
@@ -68,7 +78,7 @@ operator==(const NullVarBind& lhs, const NullVarBind &rhs) {
 /**
  * SNMP configuration definition.
  */
-struct SnmpConfig {
+struct Config {
 
   ssize_t retries;
   ssize_t timeout;
@@ -88,13 +98,12 @@ struct SnmpConfig {
 /**
  * Compare two SnmpConfigs by value.
  *
- * @param lhs Left hand-side SnmpConfig to compare.
- * @param rhs Right hand-side SnmpConfig to compare.
- * @return    Boolean indicating if the left-hand side SnmpConfig equals the right-hand side
- *            SnmpConfig.
+ * @param lhs Left hand-side Config to compare.
+ * @param rhs Right hand-side Config to compare.
+ * @return    Boolean indicating if the left-hand side Config equals the right-hand side Config.
  */
 inline bool
-operator==(const SnmpConfig& lhs, const SnmpConfig &rhs) {
+operator==(const Config& lhs, const Config &rhs) {
   return (
       (lhs.retries == rhs.retries) &
       (lhs.timeout == rhs.timeout) &
@@ -142,21 +151,24 @@ operator==(const ObjectIdentityParameter& lhs, const ObjectIdentityParameter &rh
 /**
  * SNMP versions
  */
-enum SnmpVersion {
+enum Version {
     V2C = 1
 };
 
 
-struct SnmpCommunity {
+/**
+ * SNMP community definitions.
+ */
+struct Community {
 
   uint64_t index;
-  SnmpVersion version;
+  Version version;
   std::string string;
 
   /**
-   * Convert an SnmpCommunity to a string.
+   * Convert a Community to a string.
    *
-   * @return String representation of an SnmpCommunity.
+   * @return String representation of a Community.
    */
   std::string to_string();
 
@@ -164,15 +176,15 @@ struct SnmpCommunity {
 
 
 /**
- * Compare two SnmpCommunities by value.
+ * Compare two Communities by value.
  *
- * @param lhs Left hand-side SnmpCommunity to compare.
- * @param rhs Right hand-side SnmpCommunity to compare.
- * @return    Boolean indicating if the left-hand side SnmpCommunity equals the right-hand side
- *            SnmpCommunity.
+ * @param lhs Left hand-side Community to compare.
+ * @param rhs Right hand-side Community to compare.
+ * @return    Boolean indicating if the left-hand side Community equals the right-hand side
+ *            Community.
  */
 inline bool
-operator==(const SnmpCommunity& lhs, const SnmpCommunity &rhs) {
+operator==(const Community& lhs, const Community &rhs) {
   return (
       (lhs.version == rhs.version) &
       (lhs.string == rhs.string)
@@ -187,9 +199,9 @@ struct Host {
 
   uint64_t index;
   std::string hostname;
-  std::list<SnmpCommunity> communities;
+  std::list<Community> communities;
   std::optional<std::list<ObjectIdentityParameter>> parameters;
-  std::optional<SnmpConfig> config;
+  std::optional<Config> config;
 
   /**
    * Convert a Host to a string.
@@ -293,16 +305,6 @@ enum AsyncStatus {
 
 
 /**
- * SNMP PDU types.
- */
-enum PduType {
-    GET = SNMP_MSG_GET,
-    NEXT= SNMP_MSG_GETNEXT,
-    BULKGET = SNMP_MSG_GETBULK,
-};
-
-
-/**
  * State wrapper for net-snmp callback functions.
  */
 struct AsyncState {
@@ -314,7 +316,7 @@ struct AsyncState {
   std::vector<std::vector<NullVarBind>> next_var_binds;
   std::vector<std::vector<uint8_t>> *results;
   std::vector<SnmpError> *errors;
-  std::optional<SnmpConfig> config;
+  std::optional<Config> config;
 };
 
 }

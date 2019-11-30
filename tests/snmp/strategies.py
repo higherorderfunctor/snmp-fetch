@@ -1,4 +1,4 @@
-"""Hypothesis strategies."""
+"""Netframe SNMP Hypothesis strategies."""
 
 import re
 import string
@@ -8,9 +8,8 @@ import hypothesis
 import hypothesis.strategies as st
 import numpy as np
 
-from snmp_fetch import PduType, SnmpErrorType
-from snmp_fetch.types import ObjectIdentity
-
+from snmp_fetch.snmp.api import PduType, SnmpErrorType
+from snmp_fetch.snmp.types import ObjectIdentity
 
 VALID_HOSTNAMES = [
     '127.0.0.1:1161',  # IPv4

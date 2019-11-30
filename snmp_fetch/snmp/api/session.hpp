@@ -2,8 +2,8 @@
  *  session.hpp - Session management.
  */
 
-#ifndef NETFRAME__API__CAPI_HPP
-#define NETFRAME__API__CAPI_HPP
+#ifndef NETFRAME__SNMP__API__SESSION_HPP
+#define NETFRAME__SNMP__API__SESSION_HPP
 
 #include <list>
 
@@ -14,7 +14,7 @@ extern "C" {
 #include <net-snmp/net-snmp-includes.h>
 }
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 /**
  *  create_netsnmp_session - Create a net-snmp session using the single session API for async

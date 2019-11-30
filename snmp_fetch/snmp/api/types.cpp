@@ -7,7 +7,7 @@
 #include "types.hpp"
 #include "utils.hpp"
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 std::string NullVarBind::to_string() {
   return str(
@@ -23,10 +23,10 @@ std::string NullVarBind::to_string() {
   );
 }
 
-std::string SnmpConfig::to_string() {
+std::string Config::to_string() {
   return str(
       boost::format(
-        "SnmpConfig("
+        "Config("
         "retries=%1%, "
         "timeout=%2%, "
         "var_binds_per_pdu=%3%, "
@@ -51,20 +51,20 @@ std::string ObjectIdentityParameter::to_string() {
   );
 }
 
-std::string SnmpCommunity::to_string() {
+std::string Community::to_string() {
   std::string version_string = "UNKNOWN_VERSION";
   switch (this->version) {
     case V2C:
-      version_string = "V2C";
+      version_string = "v2c";
       break;
   };
 
   return str(
       boost::format(
-        "SnmpCommunity("
+        "Community("
         "index=%1%, "
         "version=%2%, "
-        "string=%3%)"
+        "string='%3%')"
       )
       % this->index
       % version_string

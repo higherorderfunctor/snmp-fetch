@@ -4,7 +4,7 @@
 
 #include "utils.hpp"
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 std::string
 oid_to_string(uint64_t *oid, size_t oid_size) {

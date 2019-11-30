@@ -1,17 +1,17 @@
 """SNMP config test cases."""
 
 import pickle
-from typing import Sequence, Tuple, Union, Text
+from typing import Sequence, Text, Tuple, Union
 
 import hypothesis
 import hypothesis.strategies as st
+import numpy as np
+import pandas as pd
+from hypothesis.extra.numpy import arrays, from_dtype
 from hypothesis.searchstrategy.strategies import SearchStrategy
 
 from snmp_fetch import SnmpConfig
-import numpy as np
-import pandas as pd
 from snmp_fetch.pandas_extension import xt
-from hypothesis.extra.numpy import arrays, from_dtype
 from snmp_fetch.pandas_extension.utils import column_names
 
 

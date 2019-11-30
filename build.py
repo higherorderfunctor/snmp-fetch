@@ -21,7 +21,7 @@ class CMakeExtension(Extension):  # type: ignore
 
 
 extensions = [  # pylint: disable=invalid-name
-    CMakeExtension('snmp_fetch.api'),
+    CMakeExtension('snmp_fetch.snmp.api'),
 ]
 
 

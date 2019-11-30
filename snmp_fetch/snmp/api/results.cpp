@@ -4,7 +4,7 @@
 
 #include "results.hpp"
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 std::map<uint8_t, std::string> warning_value_types = {
   {128, "NO_SUCH_OBJECT"},

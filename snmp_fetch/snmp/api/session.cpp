@@ -2,9 +2,12 @@
  *  session.cpp
  */
 
+#ifndef NETFRAME__SNMP__API__SESSION_HPP
+#define NETFRAME__SNMP__API__SESSION_HPP
+
 #include "session.hpp"
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 /**
  *  create_netsnmp_session

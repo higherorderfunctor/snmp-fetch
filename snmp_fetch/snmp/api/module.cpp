@@ -1,5 +1,5 @@
 /**
- * Main entry point implementation for the python C++ extension.
+ * Main entry point implementation for the netframe::snmp::api C++ extension.
  */
 
 #include "module.hpp"
@@ -11,7 +11,7 @@
 
 namespace py = pybind11;
 
-namespace netframe::api {
+namespace netframe::snmp::api {
 
 template <typename Sequence>
 inline py::array_t<typename Sequence::value_type>
@@ -28,7 +28,7 @@ snmp(
     PduType pdu_type,
     std::vector<Host> hosts,
     std::vector<NullVarBind> var_binds,
-    std::optional<SnmpConfig> config,
+    std::optional<Config> config,
     uint64_t max_active_sessions
 ) {
 
@@ -89,7 +89,14 @@ snmp(
 }
  
 PYBIND11_MODULE(api, m) {
-  m.doc() = "Python wrapper around netframe::api's C++ API.";
+
+  m.doc() = "Python wrapper around netframe's C++ SNMP extension.";
+
+  py::enum_<PduType>(m, "PduType")
+    .value("GET", GET)
+    .value("NEXT", NEXT)
+    .value("BULKGET", BULKGET)
+    .export_values();
 
   py::class_<NullVarBind>(m, "NullVarBind")
     .def(
@@ -127,19 +134,7 @@ PYBIND11_MODULE(api, m) {
       }
     ));
 
-
-
-
-
-
-
-  py::enum_<PduType>(m, "PduType")
-    .value("GET", GET)
-    .value("NEXT", NEXT)
-    .value("BULKGET", BULKGET)
-    .export_values();
-
-  py::class_<SnmpConfig>(m, "SnmpConfig")
+  py::class_<Config>(m, "Config")
     .def(
         py::init<
           ssize_t,
@@ -152,17 +147,17 @@ PYBIND11_MODULE(api, m) {
         py::arg("var_binds_per_pdu") = DEFAULT_VAR_BINDS_PER_PDU,
         py::arg("bulk_repetitions") = DEFAULT_BULK_REPETITIONS
     )
-    .def_readwrite("retries", &SnmpConfig::retries)
-    .def_readwrite("timeout", &SnmpConfig::timeout)
-    .def_readwrite("var_binds_per_pdu", &SnmpConfig::var_binds_per_pdu)
-    .def_readwrite("bulk_repetitions",  &SnmpConfig::bulk_repetitions)
-    .def("__eq__", [](SnmpConfig &a, const SnmpConfig &b) {
+    .def_readwrite("retries", &Config::retries)
+    .def_readwrite("timeout", &Config::timeout)
+    .def_readwrite("var_binds_per_pdu", &Config::var_binds_per_pdu)
+    .def_readwrite("bulk_repetitions",  &Config::bulk_repetitions)
+    .def("__eq__", [](Config &a, const Config &b) {
         return a == b;
     }, py::is_operator())
-    .def("__str__", [](SnmpConfig &config) { return config.to_string(); })
-    .def("__repr__", [](SnmpConfig &config) { return config.to_string(); })
+    .def("__str__", [](Config &config) { return config.to_string(); })
+    .def("__repr__", [](Config &config) { return config.to_string(); })
     .def(py::pickle(
-      [](const SnmpConfig &config) {
+      [](const Config &config) {
         return py::make_tuple(
           config.retries,
           config.timeout,
@@ -171,11 +166,128 @@ PYBIND11_MODULE(api, m) {
         );
       },
       [](py::tuple t) {
-        return (SnmpConfig) {
+        return (Config) {
             t[0].cast<ssize_t>(),
             t[1].cast<ssize_t>(),
             t[2].cast<size_t>(),
             t[3].cast<size_t>()
+          };
+      }
+    ));
+
+  py::class_<ObjectIdentityParameter>(m, "ObjectIdentityParameter")
+    .def(
+        py::init<
+          ObjectIdentity,
+          std::optional<ObjectIdentity>
+        >(),
+        py::arg("start"),
+        py::arg("end") = std::nullopt
+    )
+    .def_readwrite("start", &ObjectIdentityParameter::start)
+    .def_readwrite("end", &ObjectIdentityParameter::end)
+    .def("__eq__", [](ObjectIdentityParameter &a, const ObjectIdentityParameter &b) {
+        return a == b;
+    }, py::is_operator())
+    .def("__str__", [](ObjectIdentityParameter &parameter) { return parameter.to_string(); })
+    .def("__repr__", [](ObjectIdentityParameter &parameter) { return parameter.to_string(); })
+    .def(py::pickle(
+      [](const ObjectIdentityParameter &parameter) {
+        return py::make_tuple(
+          parameter.start,
+          parameter.end
+        );
+      },
+      [](py::tuple t) {
+        return (ObjectIdentityParameter) {
+            t[0].cast<ObjectIdentity>(),
+            t[1].cast<std::optional<ObjectIdentity>>()
+          };
+      }
+    ));
+
+  py::enum_<Version>(m, "Version")
+    .value("V2C", V2C)
+    .export_values();
+
+  py::class_<Community>(m, "Community")
+    .def(
+        py::init<
+          uint64_t,
+          Version,
+          std::string
+        >(),
+        py::arg("index"),
+        py::arg("version"),
+        py::arg("string")
+    )
+    .def_readwrite("index", &Community::index)
+    .def_readwrite("version", &Community::version)
+    .def_readwrite("string", &Community::string)
+    .def("__eq__", [](Community &a, const Community &b) {
+        return a == b;
+    }, py::is_operator())
+    .def("__str__", [](Community &community) { return community.to_string(); })
+    .def("__repr__", [](Community &community) { return community.to_string(); })
+    .def(py::pickle(
+      [](const Community &community) {
+        return py::make_tuple(
+          community.index,
+          community.version,
+          community.string
+        );
+      },
+      [](py::tuple t) {
+        return (Community) {
+            t[0].cast<uint64_t>(),
+            t[1].cast<Version>(),
+            t[2].cast<std::string>()
+          };
+      }
+    ));
+
+  py::class_<Host>(m, "Host")
+    .def(
+        py::init<
+          uint64_t,
+          std::string,
+          std::list<Community>,
+          std::optional<std::list<ObjectIdentityParameter>>,
+          std::optional<Config>
+        >(),
+        py::arg("index"),
+        py::arg("hostname"),
+        py::arg("communities"),
+        py::arg("parameters"),
+        py::arg("config")
+    )
+    .def_readwrite("index", &Host::index)
+    .def_readwrite("hostname", &Host::hostname)
+    .def_readwrite("communities", &Host::communities)
+    .def_readwrite("parameters", &Host::parameters)
+    .def_readwrite("config", &Host::config)
+    .def("__eq__", [](Host &a, const Host &b) {
+        return a == b;
+    }, py::is_operator())
+    .def("__str__", [](Host &host) { return host.to_string(); })
+    .def("__repr__", [](Host &host) { return host.to_string(); })
+    .def(py::pickle(
+      [](const Host &host) {
+        return py::make_tuple(
+          host.index,
+          host.hostname,
+          host.communities,
+          host.parameters,
+          host.config
+        );
+      },
+      [](py::tuple t) {
+        return (Host) {
+            t[0].cast<uint64_t>(),
+            t[1].cast<std::string>(),
+            t[2].cast<std::list<Community>>(),
+            t[3].cast<std::optional<std::list<ObjectIdentityParameter>>>(),
+            t[4].cast<std::optional<Config>>()
           };
       }
     ));

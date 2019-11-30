@@ -56,12 +56,12 @@ set_target_properties(libnetsnmp PROPERTIES
 
 # define python module
 pybind11_add_module(api
-  snmp_fetch/api/module.cpp
-  #snmp_fetch/api/asyncio.cpp
-  #snmp_fetch/api/results.cpp
-  #snmp_fetch/api/session.cpp
-  snmp_fetch/api/types.cpp
-  snmp_fetch/api/utils.cpp
+  snmp_fetch/snmp/api/module.cpp
+  #snmp_fetch/snmp/api/asyncio.cpp
+  #snmp_fetch/snmp/api/results.cpp
+  #snmp_fetch/snmp/api/session.cpp
+  snmp_fetch/snmp/api/types.cpp
+  snmp_fetch/snmp/api/utils.cpp
 )
 
 SET(LIBS libnetsnmp OpenSSL::Crypto)
