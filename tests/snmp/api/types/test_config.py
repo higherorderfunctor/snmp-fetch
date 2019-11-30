@@ -3,57 +3,33 @@
 import pickle
 
 import hypothesis
-import hypothesis.strategies as st
 
 from snmp_fetch.snmp.api import Config
+from tests.snmp.strategies import configs
 
 
 @hypothesis.given(
-    retries=st.integers(min_value=-1, max_value=(2 ** 32) - 1),  # type: ignore
-    timeout=st.integers(min_value=-1, max_value=(2 ** 32) - 1),
-    var_binds_per_pdu=st.integers(min_value=0, max_value=(2 ** 64) - 1),
-    bulk_repetitions=st.integers(min_value=0, max_value=(2 ** 64) - 1),
+    config=configs()
 )
-def test_pickle_config(
-        retries: int,
-        timeout: int,
-        var_binds_per_pdu: int,
-        bulk_repetitions: int
+def test_pickle_config(  # type: ignore
+        config: Config
 ) -> None:
     """Test pickling an Config."""
-    config = Config(
-        retries,
-        timeout,
-        var_binds_per_pdu,
-        bulk_repetitions
-    )
     assert config == pickle.loads(pickle.dumps(config))
 
 
 @hypothesis.given(
-    retries=st.integers(min_value=-1, max_value=(2 ** 32) - 1),  # type: ignore
-    timeout=st.integers(min_value=-1, max_value=(2 ** 32) - 1),
-    var_binds_per_pdu=st.integers(min_value=0, max_value=(2 ** 64) - 1),
-    bulk_repetitions=st.integers(min_value=0, max_value=(2 ** 64) - 1),
+    config=configs()
 )
-def test_config_to_string(
-        retries: int,
-        timeout: int,
-        var_binds_per_pdu: int,
-        bulk_repetitions: int
+def test_config_to_string(  # type: ignore
+        config: Config
 ) -> None:
     """Test str and repr on an Config."""
-    config = Config(
-        retries,
-        timeout,
-        var_binds_per_pdu,
-        bulk_repetitions
-    )
     assert str(config) == repr(config)
     assert str(config) == (
         f'Config('
-        f'retries={retries}, '
-        f'timeout={timeout}, '
-        f'var_binds_per_pdu={var_binds_per_pdu}, '
-        f'bulk_repetitions={bulk_repetitions})'
+        f'retries={config.retries}, '
+        f'timeout={config.timeout}, '
+        f'var_binds_per_pdu={config.var_binds_per_pdu}, '
+        f'bulk_repetitions={config.bulk_repetitions})'
     )

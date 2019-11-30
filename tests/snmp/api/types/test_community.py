@@ -1,53 +1,34 @@
 """netframe::snmp::api::Community test cases."""
 
 import pickle
-from typing import Text
 
 import hypothesis
-import hypothesis.strategies as st
 
-from snmp_fetch.snmp.api import Community, Version
+from snmp_fetch.snmp.api import Community
+from tests.snmp.strategies import communities
 
 
 @hypothesis.given(
-    index=st.integers(min_value=0, max_value=(2 ** 32) - 1),  # type: ignore
-    version=st.just(Version.V2C),
-    string=st.text()
+    community=communities()
 )
-def test_pickle_community(
-        index: int,
-        version: Version,
-        string: Text
+def test_pickle_community(  # type: ignore
+        community: Community
 ) -> None:
     """Test pickling an Community."""
-    community = Community(
-        index,
-        version,
-        string
-    )
     assert community == pickle.loads(pickle.dumps(community))
 
 
 @hypothesis.given(
-    index=st.integers(min_value=0, max_value=(2 ** 32) - 1),  # type: ignore
-    version=st.just(Version.V2C),
-    string=st.text()
+    community=communities()
 )
-def test_community_to_string(
-        index: int,
-        version: Version,
-        string: Text
+def test_community_to_string(  # type: ignore
+        community: Community
 ) -> None:
     """Test str and repr on an SnmpCommunity."""
-    community = Community(
-        index,
-        version,
-        string
-    )
     assert str(community) == repr(community)
     assert str(community) == (
         f'Community('
-        f'index={index}, '
+        f'index={community.index}, '
         f'version=v2c, '
-        f'string=\'{string}\')'
+        f'string=\'{community.string}\')'
     )

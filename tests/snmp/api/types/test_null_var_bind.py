@@ -3,52 +3,32 @@
 import pickle
 
 import hypothesis
-import hypothesis.strategies as st
 
 from snmp_fetch.snmp.api import NullVarBind
-from snmp_fetch.snmp.types import ObjectIdentity
-from tests.snmp.strategies import oids
+from tests.snmp.strategies import null_var_binds
 
 
 @hypothesis.given(
-    oid=oids(),  # type: ignore
-    oid_size=st.integers(min_value=0, max_value=(2 ** 32) - 1),
-    value_size=st.integers(min_value=0, max_value=(2 ** 64) - 1)
+    null_var_bind=null_var_binds()
 )
-def test_pickle_null_var_bind(
-        oid: ObjectIdentity,
-        oid_size: int,
-        value_size: int,
+def test_pickle_null_var_bind(  # type: ignore
+        null_var_bind: NullVarBind
 ) -> None:
     """Test pickling a NullVarBind."""
-    var_bind = NullVarBind(
-        oid,
-        oid_size,
-        value_size
-    )
-    assert var_bind == pickle.loads(pickle.dumps(var_bind))
+    assert null_var_bind == pickle.loads(pickle.dumps(null_var_bind))
 
 
 @hypothesis.given(
-    oid=oids(),  # type: ignore
-    oid_size=st.integers(min_value=0, max_value=(2 ** 32) - 1),
-    value_size=st.integers(min_value=0, max_value=(2 ** 64) - 1)
+    null_var_bind=null_var_binds()
 )
-def test_null_var_bind_to_string(
-        oid: ObjectIdentity,
-        oid_size: int,
-        value_size: int,
+def test_null_var_bind_to_string(  # type: ignore
+        null_var_bind: NullVarBind
 ) -> None:
     """Test repr and str on a NullVarBind."""
-    var_bind = NullVarBind(
-        oid,
-        oid_size,
-        value_size
-    )
-    assert str(var_bind) == repr(var_bind)
-    assert str(var_bind) == (
+    assert str(null_var_bind) == repr(null_var_bind)
+    assert str(null_var_bind) == (
         f'NullVarBind('
-        f'oid=\'.{".".join([str(i) for i in var_bind.oid])}\', '
-        f'oid_size={oid_size}, '
-        f'value_size={value_size})'
+        f'oid=\'.{".".join([str(i) for i in null_var_bind.oid])}\', '
+        f'oid_size={null_var_bind.oid_size}, '
+        f'value_size={null_var_bind.value_size})'
     )

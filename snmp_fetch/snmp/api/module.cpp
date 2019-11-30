@@ -110,8 +110,8 @@ PYBIND11_MODULE(api, m) {
         py::arg("value_size")
     )
     .def_readwrite("oid", &NullVarBind::oid)
-    .def_readwrite("value_size", &NullVarBind::oid_size)
-    .def_readwrite("oid_size", &NullVarBind::value_size)
+    .def_readwrite("oid_size", &NullVarBind::oid_size)
+    .def_readwrite("value_size", &NullVarBind::value_size)
     .def("__eq__", [](NullVarBind &a, const NullVarBind &b) {
         return a == b;
     }, py::is_operator())
@@ -304,75 +304,67 @@ PYBIND11_MODULE(api, m) {
     .value("VALUE_WARNING", VALUE_WARNING)
     .export_values();
 
-//   // expose the SnmpError class to python
-//   py::class_<SnmpError>(m, "SnmpError")
-//     // init function with defaults
-//     .def(
-//         py::init<
-//           SNMP_ERROR_TYPE,
-//           host_t,
-//           std::optional<int64_t>,
-//           std::optional<int64_t>,
-//           std::optional<int64_t>,
-//           std::optional<int64_t>,
-//           std::optional<oid_t>,
-//           std::optional<std::string>
-//         >(),
-//         py::arg("type"),
-//         py::arg("host"),
-//         py::arg("sys_errno") = std::nullopt,
-//         py::arg("snmp_error") = std::nullopt,
-//         py::arg("err_stat") = std::nullopt,
-//         py::arg("err_index") = std::nullopt,
-//         py::arg("err_oid") = std::nullopt,
-//         py::arg("message") = std::nullopt
-//     )
-//     // allow direct access to all the SnmpError properties from python
-//     .def_readwrite("type", &SnmpError::type)
-//     .def_readwrite("host", &SnmpError::host)
-//     .def_readwrite("sys_errno", &SnmpError::sys_errno)
-//     .def_readwrite("snmp_errno", &SnmpError::snmp_errno)
-//     .def_readwrite("err_stat", &SnmpError::err_stat)
-//     .def_readwrite("err_index", &SnmpError::err_index)
-//     .def_readwrite("err_oid", &SnmpError::err_oid)
-//     .def_readwrite("message",  &SnmpError::message)
-//     // comparison operator
-//     .def("__eq__", [](SnmpError &a, const SnmpError &b) {
-//         return a == b;
-//     }, py::is_operator())
-//     // attr style printing of the SnmpError object
-//     .def("__str__", [](SnmpError &error) { return error.to_string(); })
-//     // attr style representation of the SnmpError object
-//     .def("__repr__", [](SnmpError &error) { return error.to_string(); })
-//     // pickle support
-//     .def(py::pickle(
-//       [](const SnmpError &snmp_error) {
-//         return py::make_tuple(
-//           snmp_error.type,
-//           snmp_error.host,
-//           snmp_error.sys_errno,
-//           snmp_error.snmp_errno,
-//           snmp_error.err_stat,
-//           snmp_error.err_index,
-//           snmp_error.err_oid,
-//           snmp_error.message
-//         );
-//       },
-//       [](py::tuple t) {
-//         return SnmpError(
-//             t[0].cast<SNMP_ERROR_TYPE>(),
-//             t[1].cast<host_t>(),
-//             t[2].cast<std::optional<int64_t>>(),
-//             t[3].cast<std::optional<int64_t>>(),
-//             t[4].cast<std::optional<int64_t>>(),
-//             t[5].cast<std::optional<int64_t>>(),
-//             t[6].cast<std::optional<oid_t>>(),
-//             t[7].cast<std::optional<std::string>>()
-//           );
-//       }
-//     ));
-// 
-
+  py::class_<SnmpError>(m, "SnmpError")
+    .def(
+        py::init<
+          SnmpErrorType,
+          Host,
+          std::optional<int64_t>,
+          std::optional<int64_t>,
+          std::optional<int64_t>,
+          std::optional<int64_t>,
+          std::optional<ObjectIdentity>,
+          std::optional<std::string>
+        >(),
+        py::arg("type"),
+        py::arg("host"),
+        py::arg("sys_errno") = std::nullopt,
+        py::arg("snmp_error") = std::nullopt,
+        py::arg("err_stat") = std::nullopt,
+        py::arg("err_index") = std::nullopt,
+        py::arg("err_oid") = std::nullopt,
+        py::arg("message") = std::nullopt
+    )
+    .def_readwrite("type", &SnmpError::type)
+    .def_readwrite("host", &SnmpError::host)
+    .def_readwrite("sys_errno", &SnmpError::sys_errno)
+    .def_readwrite("snmp_errno", &SnmpError::snmp_errno)
+    .def_readwrite("err_stat", &SnmpError::err_stat)
+    .def_readwrite("err_index", &SnmpError::err_index)
+    .def_readwrite("err_oid", &SnmpError::err_oid)
+    .def_readwrite("message",  &SnmpError::message)
+    .def("__eq__", [](SnmpError &a, const SnmpError &b) {
+        return a == b;
+    }, py::is_operator())
+    .def("__str__", [](SnmpError &error) { return error.to_string(); })
+    .def("__repr__", [](SnmpError &error) { return error.to_string(); })
+    .def(py::pickle(
+      [](const SnmpError &error) {
+        return py::make_tuple(
+          error.type,
+          error.host,
+          error.sys_errno,
+          error.snmp_errno,
+          error.err_stat,
+          error.err_index,
+          error.err_oid,
+          error.message
+        );
+      },
+      [](py::tuple t) {
+        return (SnmpError) {
+            t[0].cast<SnmpErrorType>(),
+            t[1].cast<Host>(),
+            t[2].cast<std::optional<int64_t>>(),
+            t[3].cast<std::optional<int64_t>>(),
+            t[4].cast<std::optional<int64_t>>(),
+            t[5].cast<std::optional<int64_t>>(),
+            t[6].cast<std::optional<ObjectIdentity>>(),
+            t[7].cast<std::optional<std::string>>()
+        };
+      }
+    ));
+ 
   m.def(
       "snmp", &snmp, "Collect SNMP objects from remote devices",
       py::arg("pdu_type"),

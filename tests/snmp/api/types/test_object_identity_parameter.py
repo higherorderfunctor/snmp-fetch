@@ -1,45 +1,30 @@
 """netframe::snmp::api::ObjectIdentityParameter test cases."""
 
 import pickle
-from typing import Optional
 
 import hypothesis
-import hypothesis.strategies as st
 
 from snmp_fetch.snmp.api import ObjectIdentityParameter
-from snmp_fetch.snmp.types import ObjectIdentity
-from tests.snmp.strategies import oids
+from tests.snmp.strategies import object_identity_parameters
 
 
 @hypothesis.given(
-    start=oids(),  # type: ignore
-    end=st.one_of(st.none(), oids())
+    parameter=object_identity_parameters()
 )
-def test_pickle_object_identity_parameter(
-        start: ObjectIdentity,
-        end: Optional[ObjectIdentity]
+def test_pickle_object_identity_parameter(  # type: ignore
+        parameter: ObjectIdentityParameter
 ) -> None:
     """Test pickling an ObjectIdentityParameter."""
-    parameter = ObjectIdentityParameter(
-        start,
-        end
-    )
     assert parameter == pickle.loads(pickle.dumps(parameter))
 
 
 @hypothesis.given(
-    start=oids(),  # type: ignore
-    end=st.one_of(st.none(), oids())
+    parameter=object_identity_parameters()
 )
-def test_object_identity_parameter_to_string(
-        start: ObjectIdentity,
-        end: Optional[ObjectIdentity]
+def test_object_identity_parameter_to_string(  # type: ignore
+        parameter: ObjectIdentityParameter
 ) -> None:
     """Test repr and str on an ObjectIdentityParameter."""
-    parameter = ObjectIdentityParameter(
-        start,
-        end
-    )
     assert str(parameter) == repr(parameter)
     assert str(parameter) == (
         f'ObjectIdentityParameter('
