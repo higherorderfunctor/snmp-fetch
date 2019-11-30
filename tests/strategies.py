@@ -9,6 +9,8 @@ import hypothesis.strategies as st
 import numpy as np
 
 from snmp_fetch import PduType, SnmpErrorType
+from snmp_fetch.types import ObjectIdentity
+
 
 VALID_HOSTNAMES = [
     '127.0.0.1:1161',  # IPv4
@@ -119,15 +121,15 @@ def pdu_types() -> hypothesis.searchstrategy.strategies.SearchStrategy[PduType]:
 
 
 def oids() -> (
-        hypothesis.searchstrategy.strategies.SearchStrategy[Sequence[int]]
+        hypothesis.searchstrategy.strategies.SearchStrategy[ObjectIdentity]
 ):
-    """Generate valid integer oids."""
+    """Generate valid oids."""
     return st.lists(
         st.integers(min_value=0, max_value=2 ^ 64 - 1), min_size=1, max_size=128
     )
 
 
-def invalid_oids() -> hypothesis.searchstrategy.strategies.SearchStrategy[Text]:
+def invalid_text_oids() -> hypothesis.searchstrategy.strategies.SearchStrategy[Text]:
     """Generate invalid text oids."""
     return st.text().filter(
         lambda x: re.match(r'^\.?\d+(\.\d+)*$', x) is None

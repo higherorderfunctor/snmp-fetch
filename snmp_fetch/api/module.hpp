@@ -50,12 +50,12 @@ as_pyarray(Sequence& seq);
  * promote multithreading.
  */
 std::tuple<std::vector<py::array_t<uint8_t>>, std::vector<SnmpError>>
-collect(
+snmp(
     PduType pdu_type,
     std::vector<Host> hosts,
     std::vector<NullVarBind> var_binds,
     std::optional<SnmpConfig> config,
-    std::optional<uint64_t> max_active_sessions
+    uint64_t max_active_sessions
 );
 
 }

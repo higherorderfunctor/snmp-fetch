@@ -29,7 +29,7 @@ snmp(
     std::vector<Host> hosts,
     std::vector<NullVarBind> var_binds,
     std::optional<SnmpConfig> config,
-    std::optional<uint64_t> max_active_sessions
+    uint64_t max_active_sessions
 ) {
 
   // Perform parameter validation.  Outside of this section, nothing should be thrown.
@@ -88,9 +88,50 @@ snmp(
 
 }
  
-
 PYBIND11_MODULE(api, m) {
   m.doc() = "Python wrapper around netframe::api's C++ API.";
+
+  py::class_<NullVarBind>(m, "NullVarBind")
+    .def(
+        py::init<
+          ObjectIdentity,
+          uint64_t,
+          uint64_t
+        >(),
+        py::arg("oid"),
+        py::arg("oid_size"),
+        py::arg("value_size")
+    )
+    .def_readwrite("oid", &NullVarBind::oid)
+    .def_readwrite("value_size", &NullVarBind::oid_size)
+    .def_readwrite("oid_size", &NullVarBind::value_size)
+    .def("__eq__", [](NullVarBind &a, const NullVarBind &b) {
+        return a == b;
+    }, py::is_operator())
+    .def("__str__", [](NullVarBind &var_bind) { return var_bind.to_string(); })
+    .def("__repr__", [](NullVarBind &var_bind) { return var_bind.to_string(); })
+    .def(py::pickle(
+      [](const NullVarBind &var_bind) {
+        return py::make_tuple(
+          var_bind.oid,
+          var_bind.oid_size,
+          var_bind.value_size
+        );
+      },
+      [](py::tuple t) {
+        return (NullVarBind) {
+            t[0].cast<ObjectIdentity>(),
+            t[1].cast<uint64_t>(),
+            t[2].cast<uint64_t>(),
+          };
+      }
+    ));
+
+
+
+
+
+
 
   py::enum_<PduType>(m, "PduType")
     .value("GET", GET)
@@ -226,7 +267,7 @@ PYBIND11_MODULE(api, m) {
       py::arg("hosts"),
       py::arg("var_binds"),
       py::arg("config") = std::nullopt,
-      py::arg("max_active_sessions") = std::nullopt
+      py::arg("max_active_sessions") = DEFAULT_MAX_ACTIVE_SESSIONS
   );
 
 }

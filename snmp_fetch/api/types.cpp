@@ -51,7 +51,36 @@ std::string ObjectIdentityParameter::to_string() {
   );
 }
 
+std::string SnmpCommunity::to_string() {
+  std::string version_string = "UNKNOWN_VERSION";
+  switch (this->version) {
+    case V2C:
+      version_string = "V2C";
+      break;
+  };
+
+  return str(
+      boost::format(
+        "SnmpCommunity("
+        "index=%1%, "
+        "version=%2%, "
+        "string=%3%)"
+      )
+      % this->index
+      % version_string
+      % this->string
+  );
+}
+
 std::string Host::to_string() {
+  std::optional<std::list<std::string>> communities = {};
+  if (!this->communities.empty()) {
+    communities = std::list<std::string>();
+    std::transform(
+      this->communities.begin(), this->communities.end(), std::back_inserter(*communities),
+      [](auto&& community) -> std::string { return community.to_string(); }
+    );
+  }
   std::optional<std::list<std::string>> parameters = {};
   if (this->parameters.has_value() && !this->parameters->empty()) {
     parameters = std::list<std::string>();
@@ -71,15 +100,16 @@ std::string Host::to_string() {
       )
       % this->index
       % this->hostname
-      % ("[" + (
-        !this->communities.empty()
-        ? std::accumulate(
-          next(this->communities.begin()), this->communities.end(),
-          "'"+this->communities.front()+"'",
-          [](auto&& lhs, auto&& rhs) -> std::string { return lhs + ", '" + rhs + "'"; }
+      % (
+        communities.has_value()
+        ? (
+          "[" + std::accumulate(
+          next(communities->begin()), communities->end(), communities->front(),
+            [](auto&& lhs, auto&& rhs) -> std::string { return lhs + ", " + rhs; }
+          ) + "]"
         )
-       : ""
-      ) + "]")
+        : "[]"
+      )
       % (
         parameters.has_value()
         ? (

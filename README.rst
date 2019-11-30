@@ -1,5 +1,5 @@
-snmp-fetch
-==========
+netframe
+========
 
 |Version badge| |Python version badge| |PyPI format badge| |Build badge| |Coverage badge|
 
@@ -20,18 +20,16 @@ snmp-fetch
 .. |Coverage badge| image:: https://coveralls.io/repos/github/higherorderfunctor/snmp-fetch/badge.svg
    :target: https://coveralls.io/github/higherorderfunctor/snmp-fetch
 
-An opinionated python3.7 SNMPv2 package designed for rapid database ingestion.  This package is a source distribution that includes a C module wrapping net-snmp.  No MIB processing is done as part of this package.  The C module copies raw results from net-snmp into numpy arrays for fast post-processing with either numpy or pandas.  Other libraries that wrap net-snmp will typically return control to python between every PDU request-response.  Snmp-fetch is designed to be thread-safe and efficient by walking multiple targets within the C module with the GIL released.  Helper modules are provided to aid in the post-processing with MIB-like definitions for converting the raw data into usable DataFrames.
+Netframe is an opinionated python3.7+ package for working with network data in pandas.  It features pandas extensions and an integrated SNMPv2 client.  This package is a source distribution that includes a C++ module wrapping net-snmp.  No MIB processing is done as part of this package.  The C module copies raw results from net-snmp into numpy arrays for fast post-processing in pandas.  Other libraries that wrap net-snmp will typically return control to python between every PDU request-response.  Netframe is designed to be thread-safe and efficient by walking multiple targets within the C module with the GIL released.
 
 Prerequisites
 """""""""""""
 
-Snmp-fetch requires python 3.7, a c++17 compiler (currently only supports gcc-8), and cmake 3.12.4+.  No other user installed dependencies should be required for building this package.
+Netframe requires python 3.7+, gcc-8, and cmake 3.12.4+.  No other user installed dependencies should be required for building this package.
 
 .. ATTENTION::
 
-   Installation can take awhile as the install script will download boost and download and build a light-weight version of net-snmp 5.8 within the package.
-
-   The boost download can take awhile as it clones each submodule as oppose to downloading the compressed distribution.  There is an issue with downloading the compressed distribution via cmake with 302 redirects to a file failing in cURL.
+   Installation can take awhile as the install script will build a light-weight version of net-snmp 5.8 within the package.
 
    The cmake script will attempt to detect the number of cores on the host machine to speedup download and build times.  Expect installation times to range from 5 minutes (4 cores with hyperthreading) to 30+ minutes (1 core).
 
@@ -62,7 +60,7 @@ The examples use jupyter and the dependencies can be installed using the followi
 Development
 """""""""""
 
-`Poetry <https://poetry.eustace.io/>`_ is required for the development of snmp-fetch.
+`Poetry <https://poetry.eustace.io/>`_ is required for the development of netframe.
 
 .. code:: console
 
@@ -74,17 +72,20 @@ Development
    git pull  # pull the latest code
    git submodule update --init --recursive --depth=1  # pull the latest submodule version
 
-   # setup the virtual environment - mypy uses symbolic links in the 'stubs' directory to
-   # expose packages that play nicely with the static type checker
-   virtualenv -p python3.7 ENV
+   # set the base python version (3.7 or 3.8)
+   export BASE_PYTHON_VERSION=3.7
+
+   # Setup the virtual environment.  Symbolic links are located in the 'stubs' directory to
+   # this virtual environment location to expose packages that play nicely with mypy.
+   virtualenv -p python${BASE_PYTHON_VERSION} ENV
+   export MYPYPATH=stubs/linux-x86_64-${BASE_PYTHON_VERSION}
    source ENV/bin/activate
    poetry install
 
 .. code:: console
 
    # C++ headers are in the following folders for linters
-   export CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-3.7/include:lib/pybind11/include:lib/boost"
-   export MYPYPATH=stubs/linux-x86_64-3.8
+   export CPLUS_INCLUDE_PATH="build/temp.linux-x86_64-${BASE_PYTHON_VERSION}/include:lib/pybind11/include:lib/boost"
 
    # python linting
    poetry run isort -rc --atomic .
@@ -95,13 +96,7 @@ Development
    # TODO: C++ Linting
 
    # testing
-   poetry run pytest -v --hypothesis-show-statistics tests
-   # fail fast testing
-   poetry run pytest -x --ff tests
-
-   # enable coverage
-   export NETFRAME_COVERAGE=1
-
+   poetry run pytest -x -ff tests
 
 Upgrading Dependencies
 ----------------------
@@ -122,7 +117,6 @@ Upgrading Dependencies
    bin.v2/tools/bcp/gcc-8/release/link-static/bcp LICENSE_1_0.txt boost/format.hpp boost/range/combine.hpp ../lib/boost
    cd ..
    rm -rf boost_X_Y_Z*
-
 
 Known Limitations
 """""""""""""""""

@@ -78,7 +78,7 @@ struct SnmpConfig {
   /**
    * Convert an SnmpConfig to a string.
    *
-   * @return String representation of a SnmpConfig.
+   * @return String representation of an SnmpConfig.
    */
   std::string to_string();
 
@@ -115,7 +115,7 @@ struct ObjectIdentityParameter {
   /**
    * Convert an ObjectIdentityParameter to a string.
    *
-   * @return String representation of a ObjectIdentityParameter.
+   * @return String representation of an ObjectIdentityParameter.
    */
   std::string to_string();
 
@@ -140,13 +140,54 @@ operator==(const ObjectIdentityParameter& lhs, const ObjectIdentityParameter &rh
 
 
 /**
+ * SNMP versions
+ */
+enum SnmpVersion {
+    V2C = 1
+};
+
+
+struct SnmpCommunity {
+
+  uint64_t index;
+  SnmpVersion version;
+  std::string string;
+
+  /**
+   * Convert an SnmpCommunity to a string.
+   *
+   * @return String representation of an SnmpCommunity.
+   */
+  std::string to_string();
+
+};
+
+
+/**
+ * Compare two SnmpCommunities by value.
+ *
+ * @param lhs Left hand-side SnmpCommunity to compare.
+ * @param rhs Right hand-side SnmpCommunity to compare.
+ * @return    Boolean indicating if the left-hand side SnmpCommunity equals the right-hand side
+ *            SnmpCommunity.
+ */
+inline bool
+operator==(const SnmpCommunity& lhs, const SnmpCommunity &rhs) {
+  return (
+      (lhs.version == rhs.version) &
+      (lhs.string == rhs.string)
+  );
+}
+
+
+/**
  * Host configuration.
  */
 struct Host {
 
   uint64_t index;
   std::string hostname;
-  std::list<std::string> communities;
+  std::list<SnmpCommunity> communities;
   std::optional<std::list<ObjectIdentityParameter>> parameters;
   std::optional<SnmpConfig> config;
 
@@ -170,7 +211,6 @@ struct Host {
 inline bool
 operator==(const Host& lhs, const Host &rhs) {
   return (
-      (lhs.index == rhs.index) &
       (lhs.hostname == rhs.hostname) &
       (lhs.communities == rhs.communities) &
       (lhs.parameters == rhs.parameters) &
