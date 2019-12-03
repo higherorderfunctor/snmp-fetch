@@ -1,6 +1,7 @@
 """Netframe SNMP Hypothesis strategies."""
 
-from typing import Optional, TypeVar
+from collections.abc import Sequence as AbstractSequence
+from typing import Optional, Sequence, Text, TypeVar, Union
 
 import hypothesis.strategies as st
 from hypothesis.searchstrategy.strategies import SearchStrategy
@@ -14,6 +15,32 @@ from snmp_fetch.snmp.types import ObjectIdentity
 T = TypeVar('T')
 
 
+VALID_HOSTNAMES = [
+    '127.0.0.1:1161',  # IPv4
+    '[::1]:1161',      # IPv6
+    'localhost:1161',  # DNS resolution
+    ':1161'            # auto fill localhost
+]
+
+
+INVALID_HOSTNAMES = [
+    '*', '0'
+]
+
+
+TIMEOUT_HOSTNAMES = [
+    '127.0.0.1:1234',  # IPv4
+    '[::1]:1234',      # IPv6
+    'localhost:1234',  # DNS resolution
+    ':1234',           # auto fill localhost
+    ''                 # auto fill localhost and port
+]
+
+VALID_COMMUNITIES = [
+    'recorded/linux-full-walk'
+]
+
+
 def optionals(strategy: SearchStrategy[T]) -> SearchStrategy[Optional[T]]:
     """Generate an optional strategy."""
     return st.one_of(
@@ -21,63 +48,116 @@ def optionals(strategy: SearchStrategy[T]) -> SearchStrategy[Optional[T]]:
     )
 
 
-def int64s() -> SearchStrategy[int]:
+def int64s(
+        min_value: int = -(2 ** 63),
+        max_value: int = (2 ** 63) - 1
+) -> SearchStrategy[int]:
     """Generate an int64."""
+    if min_value > max_value:
+        raise TypeError('min_value must be less than or equal max_value.')
+    if min_value < -(2 ** 63):
+        raise TypeError(f'min_value must be greater than or equal to {-(2 ** 63)}.')
+    if min_value > (2 ** 63) - 1:
+        raise TypeError(f'min_value must be less than or equal to {(2 ** 63) - 1}.')
+    if max_value < -(2 ** 63):
+        raise TypeError(f'max_value must be greater than or equal to {-(2 ** 63)}.')
+    if max_value > (2 ** 63) - 1:
+        raise TypeError(f'max_value must be less than or equal to {(2 ** 63) - 1}.')
     return st.integers(
-        min_value=-(2 ^ 63),
-        max_value=(2 ^ 63) - 1
+        min_value,
+        max_value
     )
 
 
-def uint64s() -> SearchStrategy[int]:
+def uint64s(
+        min_value: int = 0,
+        max_value: int = (2 ** 64) - 1
+) -> SearchStrategy[int]:
     """Generate a uint64."""
+    if min_value > max_value:
+        raise TypeError('min_value must be less than or equal to max_value.')
+    if min_value < 0:
+        raise TypeError('min_value must be greater than or equal to 0.')
+    if min_value > (2 ** 64) - 1:
+        raise TypeError(f'min_value must be less than or equal to {(2 ** 64) - 1}.')
+    if max_value < 0:
+        raise TypeError('max_value must be greater than or equal to 0.')
+    if max_value > (2 ** 64) - 1:
+        raise TypeError(f'max_value must be less than or equal to {(2 ** 64) - 1}.')
     return st.integers(
-        min_value=0,
-        max_value=(2 ^ 64) - 1
+        min_value,
+        max_value
     )
 
 
-def oids() -> SearchStrategy[ObjectIdentity]:
+def oids(
+        min_size: int = 1,
+        max_size: int = 128,
+        prefix: Optional[ObjectIdentity] = None
+) -> SearchStrategy[ObjectIdentity]:
     """Generate an ObjectIdentity."""
-    return st.lists(uint64s(), min_size=1, max_size=128)
+    if prefix is None:
+        prefix = []
+    return st.builds(
+        lambda x: prefix + x,
+        st.lists(uint64s(), min_size=min_size, max_size=max_size)
+    )
 
 
-def pdu_types() -> SearchStrategy[PduType]:
+def pdu_types(
+        types: Optional[Sequence[PduType]] = None
+) -> SearchStrategy[PduType]:
     """Generate a PduType."""
-    return st.one_of([
-        st.just(PduType.GET),
-        st.just(PduType.NEXT),
-        st.just(PduType.BULKGET)
-    ])
+    if types is None:
+        _types = [
+            st.just(PduType.GET),
+            st.just(PduType.NEXT),
+            st.just(PduType.BULKGET)
+        ]
+    else:
+        _types = [st.just(t) for t in types]
+    return st.one_of(_types)
 
 
-def null_var_binds() -> SearchStrategy[NullVarBind]:
+def null_var_binds(
+        oid: SearchStrategy[ObjectIdentity] = oids(),
+        oid_size: SearchStrategy[int] = uint64s(),
+        value_size: SearchStrategy[int] = uint64s()
+) -> SearchStrategy[NullVarBind]:
     """Generate a NullVarBind."""
     return st.builds(
         NullVarBind,
-        oid=oids(),
-        oid_size=uint64s(),
-        value_size=uint64s()
+        oid,
+        oid_size,
+        value_size
     )
 
 
-def configs() -> SearchStrategy[Config]:
+def configs(
+        retries: SearchStrategy[int] = int64s(),
+        timeout: SearchStrategy[int] = int64s(),
+        var_binds_per_pdu: SearchStrategy[int] = uint64s(),
+        bulk_repetitions: SearchStrategy[int] = uint64s()
+) -> SearchStrategy[Config]:
     """Generate a Config."""
     return st.builds(
         Config,
-        retries=int64s(),
-        timeout=int64s(),
-        var_binds_per_pdu=uint64s(),
-        bulk_repetitions=uint64s()
+        retries,
+        timeout,
+        var_binds_per_pdu,
+        bulk_repetitions
     )
 
 
-def object_identity_parameters() -> SearchStrategy[ObjectIdentityParameter]:
+def object_identity_parameters(
+        start: SearchStrategy[ObjectIdentity] = oids(),
+        end: SearchStrategy[Optional[ObjectIdentity]] = optionals(oids())
+) -> SearchStrategy[ObjectIdentityParameter]:
     """Generate an ObjectIdentityParameter."""
     return st.builds(
         ObjectIdentityParameter,
-        start=oids(),
-        end=optionals(oids())
+        start,
+        end
     )
 
 
@@ -88,84 +168,89 @@ def versions() -> SearchStrategy[Version]:
     ])
 
 
-def communities() -> SearchStrategy[Community]:
+def communities(
+        version: SearchStrategy[Version] = st.just(Version.V2C),
+        string: Union[SearchStrategy[Text], Sequence[Text]] = st.text()
+) -> SearchStrategy[Community]:
     """Generate a Community."""
+    if isinstance(string, AbstractSequence):
+        string = st.one_of([st.just(s) for s in string])
     return st.builds(
         Community,
-        index=uint64s(),
-        version=st.just(Version.V2C),
-        string=st.text()
+        version,
+        string
     )
 
 
-def hosts() -> SearchStrategy[Host]:
+def hosts(
+        host_id: SearchStrategy[int] = uint64s(),
+        hostname: Union[SearchStrategy[Text], Sequence[Text]] = st.text(),
+        community_list: SearchStrategy[Sequence[Community]] = st.lists(communities()),
+        parameters: SearchStrategy[Optional[Sequence[ObjectIdentityParameter]]] = (
+            optionals(st.lists(object_identity_parameters()))
+        ),
+        config: SearchStrategy[Optional[Config]] = st.one_of(st.none(), configs())
+) -> SearchStrategy[Host]:
     """Generate a Host."""
+    if isinstance(hostname, AbstractSequence):
+        hostname = st.one_of([st.just(h) for h in hostname])
     return st.builds(
         Host,
-        index=uint64s(),
-        hostname=st.text(),
-        communities=st.lists(communities()),
-        parameters=optionals(st.lists(object_identity_parameters())),
-        config=st.one_of(st.none(), configs())
+        host_id,
+        hostname,
+        community_list,
+        parameters,
+        config
     )
 
 
-def snmp_error_types() -> SearchStrategy[SnmpErrorType]:
+def snmp_error_types(
+        types: Optional[Sequence[SnmpErrorType]] = None
+) -> SearchStrategy[SnmpErrorType]:
     """Generate an SnmpErrorType."""
-    return st.one_of([
-        st.just(SnmpErrorType.SESSION_ERROR),
-        st.just(SnmpErrorType.CREATE_REQUEST_PDU_ERROR),
-        st.just(SnmpErrorType.SEND_ERROR),
-        st.just(SnmpErrorType.BAD_RESPONSE_PDU_ERROR),
-        st.just(SnmpErrorType.TIMEOUT_ERROR),
-        st.just(SnmpErrorType.ASYNC_PROBE_ERROR),
-        st.just(SnmpErrorType.TRANSPORT_DISCONNECT_ERROR),
-        st.just(SnmpErrorType.CREATE_RESPONSE_PDU_ERROR),
-        st.just(SnmpErrorType.VALUE_WARNING),
-    ])
+    if types is None:
+        _types = [
+            st.just(SnmpErrorType.SESSION_ERROR),
+            st.just(SnmpErrorType.CREATE_REQUEST_PDU_ERROR),
+            st.just(SnmpErrorType.SEND_ERROR),
+            st.just(SnmpErrorType.BAD_RESPONSE_PDU_ERROR),
+            st.just(SnmpErrorType.TIMEOUT_ERROR),
+            st.just(SnmpErrorType.ASYNC_PROBE_ERROR),
+            st.just(SnmpErrorType.TRANSPORT_DISCONNECT_ERROR),
+            st.just(SnmpErrorType.CREATE_RESPONSE_PDU_ERROR),
+            st.just(SnmpErrorType.VALUE_WARNING),
+        ]
+    else:
+        _types = [st.just(t) for t in types]
+    return st.one_of(_types)
 
 
-def snmp_errors() -> SearchStrategy[Host]:
+def snmp_errors(
+        error_type: SearchStrategy[SnmpErrorType] = snmp_error_types(),
+        sys_errno: SearchStrategy[Optional[int]] = optionals(int64s()),
+        snmp_errno: SearchStrategy[Optional[int]] = optionals(int64s()),
+        err_stat: SearchStrategy[Optional[int]] = optionals(int64s()),
+        err_index: SearchStrategy[Optional[int]] = optionals(int64s()),
+        err_oid: SearchStrategy[Optional[ObjectIdentity]] = optionals(oids()),
+        message: SearchStrategy[Optional[Text]] = optionals(st.text())
+) -> SearchStrategy[Host]:
+    # pylint: disable=too-many-arguments
     """Generate an SnmpError."""
     return st.builds(
         SnmpError,
-        type=snmp_error_types(),
-        sys_errno=optionals(int64s()),
-        snmp_errno=optionals(int64s()),
-        err_stat=optionals(int64s()),
-        err_index=optionals(int64s()),
-        err_oid=optionals(oids()),
-        message=optionals(st.text())
+        error_type,
+        sys_errno,
+        snmp_errno,
+        err_stat,
+        err_index,
+        err_oid,
+        message
     )
 
 
 ########################
 # 
 # 
-# VALID_HOSTNAMES = [
-#     '127.0.0.1:1161',  # IPv4
-#     '[::1]:1161',      # IPv6
-#     'localhost:1161',  # DNS resolution
-#     ':1161'            # auto fill localhost
-# ]
-# 
-# 
-# INVALID_HOSTNAMES = [
-#     '*', '0'
-# ]
-# 
-# 
-# TIMEOUT_HOSTNAMES = [
-#     '127.0.0.1:1234',  # IPv4
-#     '[::1]:1234',      # IPv6
-#     'localhost:1234',  # DNS resolution
-#     ':1234',           # auto fill localhost
-#     ''                 # auto fill localhost and port
-# ]
-# 
-# VALID_COMMUNITIES = [
-#     'recorded/linux-full-walk'
-# ]
 # 
 # 
 # def valid_hosts() -> (

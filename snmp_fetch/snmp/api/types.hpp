@@ -16,7 +16,7 @@ extern "C" {
 namespace netframe::snmp::api {
 
 // default values
-#define DEFAULT_MAX_ACTIVE_SESSIONS 10
+#define DEFAULT_MAX_ACTIVE_ASYNC_SESSIONS 10
 #define DEFAULT_RETRIES 3
 #define DEFAULT_TIMEOUT 3
 #define DEFAULT_VAR_BINDS_PER_PDU 10
@@ -152,7 +152,7 @@ operator==(const ObjectIdentityParameter& lhs, const ObjectIdentityParameter &rh
  * SNMP versions
  */
 enum Version {
-    V2C = 1
+    V2C = SNMP_VERSION_2c
 };
 
 
@@ -161,7 +161,6 @@ enum Version {
  */
 struct Community {
 
-  uint64_t index;
   Version version;
   std::string string;
 
@@ -197,11 +196,26 @@ operator==(const Community& lhs, const Community &rhs) {
  */
 struct Host {
 
-  uint64_t index;
+  uint64_t id;
   std::string hostname;
   std::list<Community> communities;
   std::optional<std::list<ObjectIdentityParameter>> parameters;
   std::optional<Config> config;
+
+  /**
+   * Take a snapshot of a host with the current community and parameter.
+   */
+  inline Host snapshot() {
+    return {
+      this->id,
+      this->hostname,
+      { this->communities.front() },
+       this->parameters.has_value()
+        ? (std::optional<std::list<ObjectIdentityParameter>>) {{ this->parameters->front() }}
+        : std::nullopt,
+      this->config
+    };
+  }
 
   /**
    * Convert a Host to a string.
@@ -223,6 +237,7 @@ struct Host {
 inline bool
 operator==(const Host& lhs, const Host &rhs) {
   return (
+      (lhs.id == rhs.id) &
       (lhs.hostname == rhs.hostname) &
       (lhs.communities == rhs.communities) &
       (lhs.parameters == rhs.parameters) &
@@ -297,7 +312,7 @@ operator==(const SnmpError& lhs, const SnmpError &rhs) {
 /**
  * Different statuses of an asynchronous session.
  */
-enum AsyncStatus {
+enum AsyncSessionStatus {
   ASYNC_IDLE = 0,
   ASYNC_WAITING,
   ASYNC_RETRY
@@ -307,16 +322,17 @@ enum AsyncStatus {
 /**
  * State wrapper for net-snmp callback functions.
  */
-struct AsyncState {
-  AsyncStatus async_status;
-  void *session;
+struct AsyncSession {
+  AsyncSessionStatus async_status;
+  void *netsnmp_session;
   PduType pdu_type;
-  Host host;
-  std::vector<NullVarBind> *var_binds;
-  std::vector<std::vector<NullVarBind>> next_var_binds;
+  Host *host;
+  uint64_t community_index;
+  std::vector<NullVarBind> *null_var_binds;
+  std::vector<std::vector<ObjectIdentity>> next_var_binds;
   std::vector<std::vector<uint8_t>> *results;
   std::vector<SnmpError> *errors;
-  std::optional<Config> config;
+  std::optional<Config> *config;
 };
 
 }

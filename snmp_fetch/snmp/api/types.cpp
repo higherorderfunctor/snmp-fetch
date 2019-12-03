@@ -62,11 +62,9 @@ std::string Community::to_string() {
   return str(
       boost::format(
         "Community("
-        "index=%1%, "
-        "version=%2%, "
-        "string='%3%')"
+        "version=%1%, "
+        "string='%2%')"
       )
-      % this->index
       % version_string
       % this->string
   );
@@ -92,13 +90,13 @@ std::string Host::to_string() {
   return str(
       boost::format(
         "Host("
-        "index=%1%, "
+        "id=%1%, "
         "hostname='%2%', " 
         "communities=%3%, "
         "parameters=%4%, "
         "config=%5%)"
       )
-      % this->index
+      % this->id
       % this->hostname
       % (
         communities.has_value()

@@ -28,7 +28,7 @@ def test_host_to_string(  # type: ignore
     assert str(host) == repr(host)
     assert str(host) == (
         f'Host('
-        f'index={host.index}, '
+        f'id={host.id}, '
         f'hostname=\'{host.hostname}\', '
         f'communities={str(host.communities)}, '
         f'parameters={str(host.parameters) if host.parameters else None}, '

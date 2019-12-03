@@ -1,1 +1,1 @@
-"""Snmp-fetch tests."""
+"""Netframe SNMP module tests."""

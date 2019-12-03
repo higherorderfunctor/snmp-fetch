@@ -1,78 +1,82 @@
 /**
- *  results.cpp
+ * Result processing implementations.
  */
 
 #include "results.hpp"
 
+#include <time.h>
+#include <boost/range/combine.hpp>
+
+extern "C" {
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
+}
+
 namespace netframe::snmp::api {
 
-std::map<uint8_t, std::string> warning_value_types = {
+std::map<uint8_t, std::string> WARNING_VALUE_TYPES = {
   {128, "NO_SUCH_OBJECT"},
   {129, "NO_SUCH_INSTANCE"},
   {130, "END_OF_MIB_VIEW"}
 };
 
-
-/**
- *  append_result
- */
 void append_result(
-    variable_list &resp_var_bind,
-    async_state &state
+    variable_list& resp_var_bind,
+    AsyncSession& session
 ) {
   // test for non-value types and generate an error if matched
-  if (warning_value_types.find(resp_var_bind.type) != warning_value_types.end()) {
-    oid_t err_var_bind;
+  if (WARNING_VALUE_TYPES.find(resp_var_bind.type) != WARNING_VALUE_TYPES.end()) {
+    ObjectIdentity err_var_bind;
     err_var_bind.assign(
         resp_var_bind.name, resp_var_bind.name + resp_var_bind.name_length
     );
-    state.errors->push_back(SnmpError(
+    session.errors->push_back((SnmpError) {
           VALUE_WARNING,
-          state.host,
+          session.host->snapshot(),
           {},
           {},
           {},
           {},
           err_var_bind,
-          warning_value_types[resp_var_bind.type]
-    ));
+          WARNING_VALUE_TYPES[resp_var_bind.type]
+    });
     return;
   }
 
-  // get a timestamp for the result
+  // get a timestamp for the response
   time_t timestamp;
   time(&timestamp);
 
-  // find the root variable binding supplied in the initial fetch request for this response
-  // variable binding
+  // find the null variable binding supplied in the initial request for this response variable
+  // binding
   auto it = std::find_if(
-      state.var_binds->begin(),
-      state.var_binds->end(),
-      [&resp_var_bind](var_bind_t const &var_bind) {
+      session.null_var_binds->begin(),
+      session.null_var_binds->end(),
+      [&resp_var_bind](const NullVarBind& null_var_bind) {
         // 0 = true; 1 = false
         return !netsnmp_oid_is_subtree(
-            std::get<0>(var_bind).data(),
-            std::get<0>(var_bind).size(),
+            null_var_bind.oid.data(),
+            null_var_bind.oid.size(),
             resp_var_bind.name,
             resp_var_bind.name_length
         );
       }
   );
 
-  // if no root variable binding is found, discard the PDU; likely cause for collecting this
+  // if no root variable binding is found, discard the response; likely cause for collecting this
   // response is an overrun on a walk
-  if (it == state.var_binds->end())
+  if (it == session.null_var_binds->end())
     return;
 
   // get the index position of the root variable binding for this response variable binding
-  size_t idx = it - state.var_binds->begin();
+  size_t idx = it - session.null_var_binds->begin();
 
   // Get the last recorded response variable binding for the found root variable binding by looking
   // at the associated next_var_binds slot.  Modulus is used due to partitioning with
-  // config.max_var_binds_per_pdu.  WARNING: if ambiguous oids are allowed and they cross partitions,
+  // var_binds_per_pdu.  WARNING: if ambiguous OIDs are allowed and they cross partitions,
   // this will likely pick the wrong index in the partition and, at worst, segfault.
-  oid_t &last_var_bind = state.next_var_binds.front()[
-    idx % state.config->max_var_binds_per_pdu
+  auto& last_var_bind = session.next_var_binds.front()[
+    idx % (session.config->has_value() ? (*session.config)->var_binds_per_pdu : DEFAULT_VAR_BINDS_PER_PDU)
   ];
 
   // discard the response variable binding if the last recorded response variable binding was marked
@@ -84,14 +88,14 @@ void append_result(
   // If it doesn't, discard the response; a walk likely overran into a slot that exists in another
   // partition.  0 == True, 1 == False
   if (netsnmp_oid_is_subtree(
-        std::get<0>(*it).data(),
-        std::get<0>(*it).size(),
+        it->oid.data(),
+        it->oid.size(),
         last_var_bind.data(),
         last_var_bind.size()
   ))
     return;
 
-  // perform an oid comparison between the response variable binding and the last recorded
+  // perform an OID comparison between the response variable binding and the last recorded
   // variable binding
   int oid_test = snmp_oid_compare(
       resp_var_bind.name,
@@ -100,13 +104,14 @@ void append_result(
       last_var_bind.size()
   );
 
-  // if the oid is lexicographically less than the last recorded variable binding, discard the
-  // response; likely cause for collecting this response is an overrun on a walk
+  // if the OID is lexicographically less than the last recorded variable binding, discard the
+  // response; likely cause for collecting this response is an overrun on a walk from another root
+  // variable binding
   if (oid_test == -1)
     return;
 
   // if performing a walk, verify the OID is increasing; else discard the response
-  if (state.pdu_type != SNMP_MSG_GET && oid_test == 0)
+  if (session.pdu_type != SNMP_MSG_GET && oid_test == 0)
     return;
 
   // all checks have passed, update the next variable binding for this slot using the response
@@ -114,40 +119,48 @@ void append_result(
   last_var_bind.clear();
   last_var_bind.assign(resp_var_bind.name, resp_var_bind.name + resp_var_bind.name_length);
 
-  // get the oid and result buffer sizes uint64_t aligned
-  size_t oid_buffer_size = UINT64_ALIGN(std::get<0>(std::get<1>((*state.var_binds)[idx])));
-  size_t result_buffer_size = UINT64_ALIGN(std::get<1>(std::get<1>((*state.var_binds)[idx])));
+  // get the OID and value buffer sizes uint64_t aligned
+  size_t oid_buffer_size = UINT64_ALIGN((*session.null_var_binds)[idx].oid_size);
+  size_t value_buffer_size = UINT64_ALIGN((*session.null_var_binds)[idx].value_size);
 
   // get the struct size of elements in the result slot
   size_t dtype_size = (
-      // host index
+      // host id
+      sizeof(uint64_t) +
+      // community index
       sizeof(uint64_t) +
       // oid buffer size (in suboids, not bytes)
       sizeof(uint64_t) +
-      // result buffer size (bytes)
+      // value buffer size (bytes)
       sizeof(uint64_t) +
-      // result type code
+      // value type code
       sizeof(uint64_t) +
       // timestamp
       sizeof(time_t) +
       // oid buffer
       oid_buffer_size +
-      // result buffer
-      result_buffer_size
+      // value buffer
+      value_buffer_size
   );
 
-  // increase the result column to copy in the response variable binding
-  auto &result = (*state.results)[idx];
+  // increase the response column to copy in the response variable binding
+  auto &result = (*session.results)[idx];
   size_t pos = result.size();
   result.resize(pos + dtype_size);
 
-  // copy the host index
+  // copy the host id
   memcpy(
       &result[pos],
-      &std::get<0>(state.host),
+      &session.host->id,
       sizeof(uint64_t)
   );
-  // copy the oid buffer size (in suboids, not bytes)
+  // copy the community index
+  memcpy(
+      &result[pos += sizeof(uint64_t)],
+      &session.community_index,
+      sizeof(uint64_t)
+  );
+  // copy the OID buffer size (in suboids, not bytes)
   memcpy(
       &result[pos += sizeof(uint64_t)],
       &resp_var_bind.name_length,
@@ -171,28 +184,21 @@ void append_result(
     &timestamp,
     sizeof(time_t)
   );
-  // copy the oid
+  // copy the OID
   memcpy(
       &result[pos += sizeof(time_t)],
       resp_var_bind.name,
       std::min(oid_buffer_size, resp_var_bind.name_length << 3)
   );
-  // copy the result
+  // copy the value
   memcpy(
       &result[pos += oid_buffer_size],
       resp_var_bind.val.bitstring,
-      // Use the caller's buffer size for the result instead of the uint64_t aligned
-      // result_buffer_size.  This allows the caller to add up to 7 bytes of padding and is
-      // useful for cstrings that expect to be null terminated.  Example: A 255 byte buffer will
-      // be copied into a 256 byte uint64_t aligned buffer with the last byte padded to 0.
-      std::min(result_buffer_size, resp_var_bind.val_len)
+      std::min(value_buffer_size, resp_var_bind.val_len)
   );
 }
 
 
-/**
- *  async_cb
- */
 int async_cb(
     int op,
     snmp_session *sp,
@@ -201,15 +207,15 @@ int async_cb(
     void *magic
 ) {
 
-  // deconstruct the state
-  auto &state = *(async_state *)magic;
+  // deconstruct the session
+  auto& session = *(AsyncSession *)magic;
 
   // set the status to idle since response PDU has been collected
-  state.async_status = ASYNC_IDLE;
+  session.async_status = ASYNC_IDLE;
 
   // create a reference to the last collected variable bindings in the current
   // parition (copy on assignment)
-  std::vector<oid_t> last_var_binds = state.next_var_binds.front();
+  std::vector<ObjectIdentity> last_var_binds = session.next_var_binds.front();
 
   // handle each op code
   switch (op) {
@@ -222,7 +228,7 @@ int async_cb(
           if (pdu->errstat == SNMP_ERR_NOERROR) {
             // append each response variable binding to the results
             for(variable_list *var = pdu->variables; var; var = var->next_variable) {
-              append_result(*var, state);
+              append_result(*var, session);
             }
           } else {
             // find the variable binding with an error
@@ -233,110 +239,110 @@ int async_cb(
                 vp && ix != pdu->errindex;
                 vp = vp->next_variable, ++ix
             );
-            oid_t err_var_bind;
+            ObjectIdentity err_var_bind;
             err_var_bind.assign(vp->name, vp->name + vp->name_length);
-            state.errors->push_back(SnmpError(
+            session.errors->push_back((SnmpError) {
                   BAD_RESPONSE_PDU_ERROR,
-                  state.host,
+                  session.host->snapshot(),
                   {},
                   {},
                   pdu->errstat,
                   pdu->errindex,
                   err_var_bind,
                   std::string(snmp_errstring(pdu->errstat))
-            ));
+            });
             // clear all work for this session
-            state.next_var_binds.clear();
+            session.next_var_binds.clear();
           }
         } else {
-          state.errors->push_back(SnmpError(
-                BAD_RESPONSE_PDU_ERROR,
-                state.host,
-                {},
-                SNMPERR_PROTOCOL,
-                {},
-                {},
-                {},
-                "Expected RESPONSE-PDU but got " +
-                std::string(snmp_pdu_type(pdu->command)) +
-                "-PDU"
-          ));
+          session.errors->push_back((SnmpError) {
+              BAD_RESPONSE_PDU_ERROR,
+              session.host->snapshot(),
+              {},
+              SNMPERR_PROTOCOL,
+              {},
+              {},
+              {},
+              "Expected RESPONSE-PDU but got " +
+              std::string(snmp_pdu_type(pdu->command)) +
+              "-PDU"
+          });
           // clear all work for this session
-          state.next_var_binds.clear();
+          session.next_var_binds.clear();
         }
       } else {
-        state.errors->push_back(SnmpError(
-              CREATE_RESPONSE_PDU_ERROR,
-              state.host,
-              {},
-              {},
-              {},
-              {},
-              {},
-              "Failed to allocate memory for the response PDU"
-        ));
+        session.errors->push_back((SnmpError) {
+            CREATE_RESPONSE_PDU_ERROR,
+            session.host->snapshot(),
+            {},
+            {},
+            {},
+            {},
+            {},
+            "Failed to allocate memory for the response PDU"
+        });
         // clear all work for this session
-        state.next_var_binds.clear();
+        session.next_var_binds.clear();
       }
       break;
     case NETSNMP_CALLBACK_OP_TIMED_OUT:
-      state.errors->push_back(SnmpError(
+      session.errors->push_back((SnmpError) {
             TIMEOUT_ERROR,
-            state.host,
+            session.host->snapshot(),
             {},
             SNMPERR_TIMEOUT,
             {},
             {},
             {},
             "Timeout error"
-      ));
+      });
       // clear all work for this session
-      state.next_var_binds.clear();
+      session.next_var_binds.clear();
       break;
     case NETSNMP_CALLBACK_OP_SEND_FAILED:
-      state.errors->push_back(SnmpError(
+      session.errors->push_back((SnmpError) {
             ASYNC_PROBE_ERROR,
-            state.host,
+            session.host->snapshot(),
             {},
             {},
             {},
             {},
             {},
             "Async probe error"
-      ));
+      });
       // clear all work for this session
-      state.next_var_binds.clear();
+      session.next_var_binds.clear();
       break;
     case NETSNMP_CALLBACK_OP_DISCONNECT:
-      state.errors->push_back(SnmpError(
+      session.errors->push_back((SnmpError) {
             TRANSPORT_DISCONNECT_ERROR,
-            state.host,
+            session.host->snapshot(),
             std::nullopt,
             SNMPERR_ABORT,
             {},
             {},
             {},
             "Transport disconnect error"
-      ));
+      });
       // clear all work for this session
-      state.next_var_binds.clear();
+      session.next_var_binds.clear();
       break;
     case NETSNMP_CALLBACK_OP_RESEND:
       // set the status to retry
-      state.async_status = ASYNC_RETRY;
+      session.async_status = ASYNC_RETRY;
       break;
   }
 
-  // validate work for the next pdu if the session is idle and the work isn't already completed
-  if (state.async_status == ASYNC_IDLE && !state.next_var_binds.empty())
+  // validate work for the next PDU if the session is idle and the work isn't already completed
+  if (session.async_status == ASYNC_IDLE && !session.next_var_binds.empty())
     // zip the work that generated this request with the proposed work found when appending the
     // results
     for (
-        auto const &&[last_oid, tail]:
-        boost::combine(last_var_binds, state.next_var_binds.front())
+        const auto &&[last_oid, tail]:
+        boost::combine(last_var_binds, session.next_var_binds.front())
     ) {
-      auto &next_oid = boost::get<0>(tail);  // deconstruct the (next_oid, nil) tuple
-      // if result oid did not increase from the request oid, mark the slot to no longer
+      auto& next_oid = boost::get<0>(tail);  // deconstruct the (OID, nil) tuple
+      // if result OID did not increase from the request OID, mark the slot to no longer
       // collect; it was either a get request or a walk request that has been exhausted
       if (snmp_oid_compare(
           next_oid.data(),

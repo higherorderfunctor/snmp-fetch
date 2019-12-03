@@ -1,22 +1,24 @@
 /**
- *  session.cpp
+ * Session management implementation.
  */
-
-#ifndef NETFRAME__SNMP__API__SESSION_HPP
-#define NETFRAME__SNMP__API__SESSION_HPP
 
 #include "session.hpp"
 
+// TODO might be needed #include <list>
+//
+
+extern "C" {
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
+}
+
 namespace netframe::snmp::api {
 
-/**
- *  create_netsnmp_session
- */
 void *
 create_netsnmp_session(
-    host_t &host,
-    std::vector<SnmpError> &errors,
-    SnmpConfig &config
+    Host& host,
+    std::vector<SnmpError>& errors,
+    std::optional<Config>& config
 ) {
 
   // init a net-snmp session template
@@ -24,12 +26,20 @@ create_netsnmp_session(
   snmp_sess_init(&session);
 
   // configure the session template
-  session.peername = strdup(std::get<1>(host).c_str());
-  session.version = SNMP_VERSION_2c;
-  session.retries = (config.retries >= 0) ? config.retries : -1;
-  session.timeout = (config.timeout >= 0) ? config.timeout * ONE_SEC : -1;
-  session.community = (u_char *)std::get<2>(host).c_str();
+  session.peername = strdup(host.hostname.c_str());
+  session.retries = host.config.has_value()
+                      ? (host.config->retries > 1 ? host.config->retries : 1)
+                      : config.has_value()
+                        ? (config->retries >= 0 ? config->retries : -1)
+                        : DEFAULT_RETRIES;
+  session.timeout = host.config.has_value()
+                      ? (host.config->timeout > 1 ? host.config->timeout : 1)
+                      : config.has_value()
+                        ? (config->timeout >= 0 ? config->timeout : -1)
+                        : DEFAULT_TIMEOUT;
+  session.community = (u_char *)strdup(host.communities.front().string.c_str());
   session.community_len = strlen((char *)session.community);
+  session.version = host.communities.front().version;
 
   // open the session
   void *sp = snmp_sess_open(&session);
@@ -40,16 +50,18 @@ create_netsnmp_session(
     int sys_errno;
     int snmp_errno;
     snmp_error(&session, &errno, &snmp_errno, &message);
-    errors.push_back(SnmpError(
-          SESSION_ERROR,
-          host,
-          sys_errno,
-          snmp_errno,
-          {},
-          {},
-          {},
-          std::string(message)
-    ));
+    errors.push_back((SnmpError) {
+        SESSION_ERROR,
+        host,
+        sys_errno,
+        snmp_errno,
+        {},
+        {},
+        {},
+        std::string(message)
+    });
+    SNMP_FREE(session.peername);
+    SNMP_FREE(session.community);
     SNMP_FREE(message);
   }
 
@@ -57,53 +69,53 @@ create_netsnmp_session(
 
 }
 
-
-/**
- *  create_session
- */
 void create_session(
-    int pdu_type,
-    host_t &host,
-    std::vector<var_bind_t> &var_binds,
-    std::vector<std::vector<uint8_t>> &results,
-    std::vector<SnmpError> &errors,
-    SnmpConfig &config,
-    std::list<async_state> &sessions
+    PduType pdu_type,
+    Host& host,
+    std::vector<NullVarBind>& null_var_binds,
+    std::vector<std::vector<uint8_t>>& results,
+    std::vector<SnmpError>& errors,
+    std::optional<Config>& config,
+    std::list<AsyncSession>& sessions
 ) {
 
     // create the net-snmp session
     void *session = create_netsnmp_session(host, errors, config);
 
-    // If session creation failed, do not add a state wrapped session.  create_session is
-    // responsible for populating the errors list.  The caller is responsible for discarding the
-    // host.
+    // If session creation failed, do not add a session.  create_session is responsible for
+    // populating the errors list.  The caller is responsible for discarding the host.
     if (session == NULL)
       return;
 
-    // Create a vector of vectors of variable bindings to fetch.  These vectors represent the
+    // Create a vector of vectors of NullVarBinds to collect.  These vectors represent the
     // partitioning of variable bindings by config.max_var_binds_per_pdu.  These variable bindings
     // define the work needed on the session and are seeded with the var_binds from the caller.
-    std::vector<std::vector<oid_t>> next_var_binds;
+    std::vector<std::vector<ObjectIdentity>> next_var_binds;
     // iterate through the request var_binds and populate each vector
-    for(auto &&vb: var_binds) {
+    for(auto&& vb: null_var_binds) {
       // if the base vector is empty or max_var_binds_per_pdu has been reached in the last vector,
       // add another partition.
       if (
           next_var_binds.empty() ||
-          next_var_binds.back().size() == config.max_var_binds_per_pdu
+          next_var_binds.back().size() == (
+            config.has_value()
+              ? config->var_binds_per_pdu
+              : DEFAULT_VAR_BINDS_PER_PDU
+          )
       )
-        next_var_binds.push_back(std::vector<oid_t>());
+        next_var_binds.push_back(std::vector<ObjectIdentity>());
       // add the var_bind to the last partition
-      next_var_binds.back().push_back(std::get<0>(vb));
+      next_var_binds.back().push_back(vb.oid);
     }
 
     // create a state wrapped session for net-snmp callbacks
-    auto st = async_state {
+    auto st = (AsyncSession) {
       ASYNC_IDLE,
       session,
       pdu_type,
-      host,
-      &var_binds,
+      &host,
+      0,
+      &null_var_binds,
       next_var_binds,  // copy on assignment
       &results,
       &errors,
@@ -115,47 +127,41 @@ void create_session(
 
 }
 
-
-/**
- *  close_completed_sessions
- */
 void close_completed_sessions(
-    std::list<async_state> &sessions
+    std::list<AsyncSession>& sessions
 ) {
 
-  // Iterate through all the active sessions. Iterator advancement is controlled manually as the
-  // list will be modified in-place during iteration.
+  // Iterate through all the sessions. Iterator advancement is controlled manually as the list will
+  // be modified in-place during iteration.
   for (auto st = sessions.begin(); st != sessions.end();) {
-    auto &session = *st; // dereference the iterator
-
-    // do not process non-idle sessions
-    if (session.async_status == ASYNC_IDLE) {
+    // skip non-idle sessions
+    if (st->async_status == ASYNC_IDLE) {
       // check if there are any next_var_bind partitions (potentially defined work)
-      if (!session.next_var_binds.empty()) {
-        // if there is potential work, verify all var_binds are not empty in the current partition
+      if (!st->next_var_binds.empty()) {
+        // if there is potential work, verify all next_var_binds are non-empty in the current partition
         if (
             std::all_of(
-              session.next_var_binds.front().begin(),
-              session.next_var_binds.front().end(),
-              [](auto &vb) { return vb.empty(); }
+              st->next_var_binds.front().begin(),
+              st->next_var_binds.front().end(),
+              [](auto& vb) { return vb.empty(); }
             )
         )
-          // If all var_binds are empty, the work is complete, so remove the partition.
-          session.next_var_binds.erase(session.next_var_binds.begin());
+          // if all var_binds are empty, the work is complete, so remove the partition
+          st->next_var_binds.erase(st->next_var_binds.begin());
         // otherwise, rotate the partitions to interleave var_binds from other partitions
         else
           std::rotate(
-              session.next_var_binds.begin(),
-              session.next_var_binds.begin() + 1,
-              session.next_var_binds.end()
+              st->next_var_binds.begin(),
+              st->next_var_binds.begin() + 1,
+              st->next_var_binds.end()
           );
       }
 
       // if there are no partitions left, close the session
-      if (session.next_var_binds.empty()) {
+      if (st->next_var_binds.empty()) {
         // close the net-snmp session
-        snmp_sess_close(session.session);
-        // remove the state wrapped session from active sessions
+        snmp_sess_close(st->netsnmp_session);
+        // remove the session
         st = sessions.erase(st);
         // next session is now on this iterator after erasing it; do not incrememnt the iterator
         continue;

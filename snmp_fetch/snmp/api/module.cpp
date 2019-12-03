@@ -7,12 +7,20 @@
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
 
+#include "asyncio.hpp"
 #include "utils.hpp"
 
 namespace py = pybind11;
 
 namespace netframe::snmp::api {
 
+/**
+ * Wraps a C++ sequence in a numpy array.  This object will free the underlying data when the numpy
+ * array is garbage collected.
+ *
+ * @param seq Sequence to be wrapped in a numpy array.
+ * @return    Numpy array.
+ */
 template <typename Sequence>
 inline py::array_t<typename Sequence::value_type>
 as_pyarray(Sequence& seq) {
@@ -24,20 +32,22 @@ as_pyarray(Sequence& seq) {
 }
 
 std::tuple<std::vector<py::array_t<uint8_t>>, std::vector<SnmpError>>
-snmp(
+dispatch(
     PduType pdu_type,
-    std::vector<Host> hosts,
-    std::vector<NullVarBind> var_binds,
+    std::list<Host> hosts,
+    std::vector<NullVarBind> null_var_binds,
     std::optional<Config> config,
-    uint64_t max_active_sessions
+    uint64_t max_active_async_sessions
 ) {
 
   // Perform parameter validation.  Outside of this section, nothing should be thrown.
   // Pybind11 does most of the checks via the type system conversion.
   if (hosts.empty())
     throw std::runtime_error("No hosts supplied");
+
+  // TODO: test non-unqiue community indexes
  
-  if (var_binds.empty())
+  if (null_var_binds.empty())
     throw std::runtime_error("No variable bindings supplied");
 
   // One variable binding cannot be a subtree of another or be equal.  Each variable binding
@@ -45,9 +55,9 @@ snmp(
   // roots would cause ambiguity in the result vector selection.
 
   // loop through 0..n-1 var_binds as 'it'
-  for (auto it = var_binds.begin(); it != std::next(var_binds.end(), -1); ++it)
+  for (auto it = null_var_binds.begin(); it != std::next(null_var_binds.end(), -1); ++it)
     // loop through it..n var_binds as 'jt'
-    for (auto jt = std::next(it, 1); jt != var_binds.end(); ++jt)
+    for (auto jt = std::next(it, 1); jt != null_var_binds.end(); ++jt)
       // Check if either is a subtree of the other.  This comparison checks to the length of the
       // shortest oid.  If the result is 0, one is a subtree of the other or equal which fails the
       // check.
@@ -64,11 +74,19 @@ snmp(
   // release the GIL - entering pure C++ code
   py::gil_scoped_release release;
 
-  std::vector<std::vector<uint8_t>> results(var_binds.size(), std::vector<uint8_t>());
+  std::vector<std::vector<uint8_t>> results(null_var_binds.size(), std::vector<uint8_t>());
   std::vector<SnmpError> errors;
 
   // run the IO loop
-  // run(pdu_type, hosts, var_binds, results, errors, config);
+  run(
+      pdu_type,
+      hosts,
+      null_var_binds,
+      results,
+      errors,
+      config,
+      max_active_async_sessions
+  );
 
   // acquire the GIL - exiting pure C++ code
   py::gil_scoped_acquire acquire;
@@ -151,13 +169,13 @@ PYBIND11_MODULE(api, m) {
     .def_readwrite("timeout", &Config::timeout)
     .def_readwrite("var_binds_per_pdu", &Config::var_binds_per_pdu)
     .def_readwrite("bulk_repetitions",  &Config::bulk_repetitions)
-    .def("__eq__", [](Config &a, const Config &b) {
+    .def("__eq__", [](Config& a, const Config& b) {
         return a == b;
     }, py::is_operator())
-    .def("__str__", [](Config &config) { return config.to_string(); })
-    .def("__repr__", [](Config &config) { return config.to_string(); })
+    .def("__str__", [](Config& config) { return config.to_string(); })
+    .def("__repr__", [](Config& config) { return config.to_string(); })
     .def(py::pickle(
-      [](const Config &config) {
+      [](const Config& config) {
         return py::make_tuple(
           config.retries,
           config.timeout,
@@ -186,13 +204,13 @@ PYBIND11_MODULE(api, m) {
     )
     .def_readwrite("start", &ObjectIdentityParameter::start)
     .def_readwrite("end", &ObjectIdentityParameter::end)
-    .def("__eq__", [](ObjectIdentityParameter &a, const ObjectIdentityParameter &b) {
+    .def("__eq__", [](ObjectIdentityParameter& a, const ObjectIdentityParameter& b) {
         return a == b;
     }, py::is_operator())
-    .def("__str__", [](ObjectIdentityParameter &parameter) { return parameter.to_string(); })
-    .def("__repr__", [](ObjectIdentityParameter &parameter) { return parameter.to_string(); })
+    .def("__str__", [](ObjectIdentityParameter& parameter) { return parameter.to_string(); })
+    .def("__repr__", [](ObjectIdentityParameter& parameter) { return parameter.to_string(); })
     .def(py::pickle(
-      [](const ObjectIdentityParameter &parameter) {
+      [](const ObjectIdentityParameter& parameter) {
         return py::make_tuple(
           parameter.start,
           parameter.end
@@ -213,35 +231,30 @@ PYBIND11_MODULE(api, m) {
   py::class_<Community>(m, "Community")
     .def(
         py::init<
-          uint64_t,
           Version,
           std::string
         >(),
-        py::arg("index"),
         py::arg("version"),
         py::arg("string")
     )
-    .def_readwrite("index", &Community::index)
     .def_readwrite("version", &Community::version)
     .def_readwrite("string", &Community::string)
-    .def("__eq__", [](Community &a, const Community &b) {
+    .def("__eq__", [](Community& a, const Community& b) {
         return a == b;
     }, py::is_operator())
-    .def("__str__", [](Community &community) { return community.to_string(); })
-    .def("__repr__", [](Community &community) { return community.to_string(); })
+    .def("__str__", [](Community& community) { return community.to_string(); })
+    .def("__repr__", [](Community& community) { return community.to_string(); })
     .def(py::pickle(
-      [](const Community &community) {
+      [](const Community& community) {
         return py::make_tuple(
-          community.index,
           community.version,
           community.string
         );
       },
       [](py::tuple t) {
         return (Community) {
-            t[0].cast<uint64_t>(),
-            t[1].cast<Version>(),
-            t[2].cast<std::string>()
+            t[0].cast<Version>(),
+            t[1].cast<std::string>()
           };
       }
     ));
@@ -255,26 +268,26 @@ PYBIND11_MODULE(api, m) {
           std::optional<std::list<ObjectIdentityParameter>>,
           std::optional<Config>
         >(),
-        py::arg("index"),
+        py::arg("id"),
         py::arg("hostname"),
         py::arg("communities"),
-        py::arg("parameters"),
-        py::arg("config")
+        py::arg("parameters") = std::nullopt,
+        py::arg("config") = std::nullopt
     )
-    .def_readwrite("index", &Host::index)
+    .def_readwrite("id", &Host::id)
     .def_readwrite("hostname", &Host::hostname)
     .def_readwrite("communities", &Host::communities)
     .def_readwrite("parameters", &Host::parameters)
     .def_readwrite("config", &Host::config)
-    .def("__eq__", [](Host &a, const Host &b) {
+    .def("__eq__", [](Host& a, const Host& b) {
         return a == b;
     }, py::is_operator())
-    .def("__str__", [](Host &host) { return host.to_string(); })
-    .def("__repr__", [](Host &host) { return host.to_string(); })
+    .def("__str__", [](Host& host) { return host.to_string(); })
+    .def("__repr__", [](Host& host) { return host.to_string(); })
     .def(py::pickle(
-      [](const Host &host) {
+      [](const Host& host) {
         return py::make_tuple(
-          host.index,
+          host.id,
           host.hostname,
           host.communities,
           host.parameters,
@@ -333,13 +346,13 @@ PYBIND11_MODULE(api, m) {
     .def_readwrite("err_index", &SnmpError::err_index)
     .def_readwrite("err_oid", &SnmpError::err_oid)
     .def_readwrite("message",  &SnmpError::message)
-    .def("__eq__", [](SnmpError &a, const SnmpError &b) {
+    .def("__eq__", [](SnmpError& a, const SnmpError& b) {
         return a == b;
     }, py::is_operator())
-    .def("__str__", [](SnmpError &error) { return error.to_string(); })
-    .def("__repr__", [](SnmpError &error) { return error.to_string(); })
+    .def("__str__", [](SnmpError& error) { return error.to_string(); })
+    .def("__repr__", [](SnmpError& error) { return error.to_string(); })
     .def(py::pickle(
-      [](const SnmpError &error) {
+      [](const SnmpError& error) {
         return py::make_tuple(
           error.type,
           error.host,
@@ -366,12 +379,12 @@ PYBIND11_MODULE(api, m) {
     ));
  
   m.def(
-      "snmp", &snmp, "Collect SNMP objects from remote devices",
+      "dispatch", &dispatch, "Collect SNMP objects from remote devices",
       py::arg("pdu_type"),
       py::arg("hosts"),
       py::arg("var_binds"),
       py::arg("config") = std::nullopt,
-      py::arg("max_active_sessions") = DEFAULT_MAX_ACTIVE_SESSIONS
+      py::arg("max_active_async_sessions") = DEFAULT_MAX_ACTIVE_ASYNC_SESSIONS
   );
 
 }

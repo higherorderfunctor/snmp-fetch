@@ -1,57 +1,56 @@
 /**
- *  asyncio.hpp - Async IO handlers.
+ *  Async function definitions.
  */
 
 #ifndef NETFRAME__SNMP__API__ASYNCIO_HPP
 #define NETFRAME__SNMP__API__ASYNCIO_HPP
 
 #include "results.hpp"
-#include "session.hpp"
 
 namespace netframe::snmp::api {
 
 /**
- *  async_sessions_send - Dispatch request PDUs.
+ * Dispatch request PDUs to a list of sessions.
  *
- *  @param sessions Reference to a list of state wrapped net-snmp sessions.  This function sends
- *                  a request PDU to each.
- *  @param callback Pointer to a callback function once the async request is completed.
+ * @param sessions Reference to a list of AsyncSessions.
+ * @param callback Pointer to a callback function once the async request is completed.
  */
 void async_sessions_send(
-    std::list<AsyncState> &sessions,
+    std::list<AsyncSession>& sessions,
     netsnmp_callback cb
 );
 
 
 /**
- *  async_sessions_read - Read all sockets for response PDUs.
+ * Read all sockets for response PDUs and call the callback for each.
  *
- *  @param sessions Reference to a list of state wrapped net-snmp sessions.  This function checks
- *  each for response PDUs which triggers the callback function on the session.
+ * @param sessions Reference to a list of AsyncSessions.
  */
 void async_sessions_read(
-    std::list<AsyncState> &sessions
+    std::list<AsyncSession>& sessions
 );
 
 
-/*
- *  run - Run the main event loop.
+/**
+ * Run the main event loop.
  *
- *  @param pdu_type  PDU type of this request.
- *  @param hosts     Reference to the hosts for collection.
- *  @param var_binds Reference to the variable for collection.
- *  @param results   Reference to the results collected.
- *  @param errors    Reference to the errors collected.
- *  @param config    Default SNMP config.
+ * @param pdu_type              PDU type of this request.
+ * @param hosts                 Reference to the hosts for collection.
+ * @param var_binds             Reference to the variable for collection.
+ * @param results               Reference to the results collected.
+ * @param errors                Reference to the errors collected.
+ * @param config                Optional default SNMP config.
+ * @param max_active_sessions   Maximum number of active async sessions.
  */
 void
 run(
-    int pdu_type,
-    std::vector<Host> &hosts,
-    std::vector<NullVarBind> &var_binds,
-    std::vector<std::vector<uint8_t>> &results,
-    std::vector<SnmpError> &errors,
-    std::optional<SnmpConfig> config
+    PduType pdu_type,
+    std::list<Host> hosts,
+    std::vector<NullVarBind>& null_var_binds,
+    std::vector<std::vector<uint8_t>>& results,
+    std::vector<SnmpError>& errors,
+    std::optional<Config>& config,
+    uint64_t max_active_async_sessions
 );
 
 }

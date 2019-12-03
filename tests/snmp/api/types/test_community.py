@@ -28,7 +28,6 @@ def test_community_to_string(  # type: ignore
     assert str(community) == repr(community)
     assert str(community) == (
         f'Community('
-        f'index={community.index}, '
         f'version=v2c, '
         f'string=\'{community.string}\')'
     )

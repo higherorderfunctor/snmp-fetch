@@ -63,13 +63,11 @@ class Version(type):  # noqa: D101
 
 class Community:  # noqa: D101
 
-    index: int
     version: Version
     string: Text
 
     def __init__(  # noqa: D107
         self,
-        index: int,
         version: Version,
         string: Text
     ) -> None: ...
@@ -77,7 +75,7 @@ class Community:  # noqa: D101
 
 class Host:  # noqa: D101
 
-    index: int
+    id: int
     hostname: Text
     communities: List[Community]
     parameters: Optional[List[ObjectIdentityParameter]]
@@ -129,9 +127,10 @@ class SnmpError:  # noqa: D101
     ) -> None: ...
 
 
-def fetch(  # noqa: D103
+def dispatch(  # noqa: D103
     pdu_type: PduType,
-    hosts: Sequence[Tuple[int, Text, Text]],
-    var_binds: Sequence[Tuple[Sequence[int], Tuple[int, int]]],
-    config: Config = ...
+    hosts: Sequence[Host],
+    null_var_binds: Sequence[NullVarBind],
+    config: Optional[Config] = ...,
+    max_active_async_sessions: int = ...,
 ) -> Tuple[Sequence[np.ndarray], Sequence[SnmpError]]: ...

@@ -15,22 +15,10 @@ namespace py = pybind11;
 namespace netframe::snmp::api {
 
 /**
- * Wraps a C++ sequence in a numpy array.  This object will free the underlying data when the
- * numpy array is garbage collected.
+ * Python interface for dispatching an SNMP request.
  *
- * @param seq Sequence to be wrapped in a numpy array.
- * @return    Numpy array.
- */
-template <typename Sequence>
-inline py::array_t<typename Sequence::value_type>
-as_pyarray(Sequence& seq);
-
-
-/**
- * Python interface for making an SNMP request.
- *
- * @param pdu_type             GET, GETNEXT, or GETBULK.
- * @param hosts                A list Hosts.
+ * @param pdu_type             A PduType.
+ * @param hosts                A list of Hosts.
  * @param var_binds            A list of NullVarBinds.
  * @param config               An optional SnmpConfig.
  * @param max_active_sessions  An optional value indicate the maximum number of asynchronous sessions.
@@ -50,10 +38,10 @@ as_pyarray(Sequence& seq);
  * promote multithreading.
  */
 std::tuple<std::vector<py::array_t<uint8_t>>, std::vector<SnmpError>>
-snmp(
+dispatch(
     PduType pdu_type,
-    std::vector<Host> hosts,
-    std::vector<NullVarBind> var_binds,
+    std::list<Host> hosts,
+    std::vector<NullVarBind> null_var_binds,
     std::optional<Config> config,
     uint64_t max_active_sessions
 );

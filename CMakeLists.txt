@@ -57,9 +57,9 @@ set_target_properties(libnetsnmp PROPERTIES
 # define python module
 pybind11_add_module(api
   snmp_fetch/snmp/api/module.cpp
-  #snmp_fetch/snmp/api/asyncio.cpp
-  #snmp_fetch/snmp/api/results.cpp
-  #snmp_fetch/snmp/api/session.cpp
+  snmp_fetch/snmp/api/asyncio.cpp
+  snmp_fetch/snmp/api/results.cpp
+  snmp_fetch/snmp/api/session.cpp
   snmp_fetch/snmp/api/types.cpp
   snmp_fetch/snmp/api/utils.cpp
 )
