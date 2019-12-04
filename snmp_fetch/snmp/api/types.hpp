@@ -6,7 +6,9 @@
 #define NETFRAME__SNMP__API__TYPES_HPP
 
 #include <list>
-#include <boost/format.hpp>
+#include <string>
+#include <optional>
+#include <vector>
 
 extern "C" {
 #include <net-snmp/net-snmp-config.h>
@@ -18,7 +20,7 @@ namespace netframe::snmp::api {
 // default values
 #define DEFAULT_MAX_ACTIVE_ASYNC_SESSIONS 10
 #define DEFAULT_RETRIES 3
-#define DEFAULT_TIMEOUT 3
+#define DEFAULT_TIMEOUT 3 * ONE_SEC
 #define DEFAULT_VAR_BINDS_PER_PDU 10
 #define DEFAULT_BULK_REPETITIONS 10
 
@@ -44,7 +46,7 @@ enum PduType {
  */
 struct NullVarBind {
   ObjectIdentity oid;
-  uint64_t oid_size;  // in bytes
+  uint64_t oid_size;    // in bytes
   uint64_t value_size;  // in bytes
   
   /**
@@ -118,7 +120,7 @@ operator==(const Config& lhs, const Config &rhs) {
  */
 struct ObjectIdentityParameter {
 
-  ObjectIdentity start;
+  std::optional<ObjectIdentity> start;
   std::optional<ObjectIdentity> end;
 
   /**
@@ -205,17 +207,8 @@ struct Host {
   /**
    * Take a snapshot of a host with the current community and parameter.
    */
-  inline Host snapshot() {
-    return {
-      this->id,
-      this->hostname,
-      { this->communities.front() },
-       this->parameters.has_value()
-        ? (std::optional<std::list<ObjectIdentityParameter>>) {{ this->parameters->front() }}
-        : std::nullopt,
-      this->config
-    };
-  }
+ 	Host snapshot();
+ 	Host snapshot() const;
 
   /**
    * Convert a Host to a string.
@@ -324,15 +317,15 @@ enum AsyncSessionStatus {
  */
 struct AsyncSession {
   AsyncSessionStatus async_status;
-  void *netsnmp_session;
-  PduType pdu_type;
-  Host *host;
+  void* netsnmp_session;
+  const PduType pdu_type;
+  Host host;
   uint64_t community_index;
-  std::vector<NullVarBind> *null_var_binds;
-  std::vector<std::vector<ObjectIdentity>> next_var_binds;
-  std::vector<std::vector<uint8_t>> *results;
-  std::vector<SnmpError> *errors;
-  std::optional<Config> *config;
+  const std::vector<NullVarBind>* null_var_binds;
+  std::vector<std::vector<ObjectIdentity>> next_object_identities;
+  std::vector<std::vector<uint8_t>>* results;
+  std::vector<SnmpError>* errors;
+  const std::optional<Config> *config;
 };
 
 }

@@ -11,8 +11,10 @@ import numpy as np
 import pandas as pd
 from toolz.functoolz import compose
 
-from .fp.maybe import Just, Maybe, Nothing
-from .utils import concatv_dtypes, convert_oid, dtype_array, dtype_fields, validate_oid
+from snmp_fetch.fp.maybe import Just, Maybe, Nothing
+from snmp_fetch.utils import concatv_dtypes, dtype_array, dtype_fields
+from .api import NullVarBind
+from .utils import convert_oid, validate_oid
 
 NULL_VAR_BIND_T = Tuple[Sequence[int], Tuple[int, int]]  # pylint: disable=invalid-name
 
@@ -57,10 +59,11 @@ class MetaObjectType(type):
         cls._children['.'.join([child.__module__, child.__qualname__])] = child
 
     _header_dtype = Just(np.dtype([
-        ('#index', np.uint64),
+        ('#id', np.uint64),
+        ('#community_index', np.uint64),
         ('#oid_size', np.uint64),
-        ('#result_size', np.uint64),
-        ('#result_type', np.uint64),  # TODO: value size and type
+        ('#value_size', np.uint64),
+        ('#value_type', np.uint64),
         ('#timestamp', 'datetime64[s]'),
     ]))
 
@@ -99,7 +102,7 @@ class MetaObjectType(type):
 
     def null_var_binds(
             cls, param: Optional[Text] = None
-    ) -> Sequence[NULL_VAR_BIND_T]:
+    ) -> Sequence[NullVarBind]:
         """Get a description of null variable bindings to be filled."""
         def _check(null_var_bind: NULL_VAR_BIND_T) -> NULL_VAR_BIND_T:
             for size in null_var_bind[1]:
@@ -132,7 +135,11 @@ class MetaObjectType(type):
                     'ObjectType with a value dtype has children: '
                     f'cls={cls.__name__}: dtype={cls.dtype}: children={cls._children}'
                 )
-            return [_check(_concat_null_var_binds(_node_null_var_binds(cls), param_null_var_bind))]
+            return [
+                NullVarBind(oid, oid_size, value_size)
+                for oid, (oid_size, value_size)
+                in [_check(_concat_null_var_binds(_node_null_var_binds(cls), param_null_var_bind))]
+            ]
 
         matrix = cls._matrix
 
@@ -144,12 +151,17 @@ class MetaObjectType(type):
         if len(index_set) not in {0, 1}:
             raise RuntimeError(f'ObjectTypes do not share common index: {index_set}')
 
-        return [
+        _null_var_binds = [
             _check(reduce(
                 _concat_null_var_binds,
                 [*map(_node_null_var_binds, col), param_null_var_bind]
             ))
             for col in matrix  # pylint: disable=not-an-iterable
+        ]
+
+        return [
+            NullVarBind(oid, oid_size, value_size)
+            for oid, (oid_size, value_size) in _null_var_binds
         ]
 
     def _view(cls, arr: np.ndarray, col: Sequence['MetaObjectType']) -> Any:
@@ -196,13 +208,13 @@ class MetaObjectType(type):
         ), col, df)
 
         if df.index.names is not None and [i for i in df.index.names if i is not None]:
-            df = df.reset_index().set_index(['#index', *df.index.names])
+            df = df.reset_index().set_index(['#id', *df.index.names])
         else:
-            df = df.set_index('#index')
+            df = df.set_index('#id')
 
         return (
             df.drop(columns={
-                '#oid_size', '#result_size', '#result_type', '#oid'
+                '#community_index', '#oid_size', '#value_size', '#value_type', '#oid'
             }.intersection(df.columns))
         )
 
@@ -226,7 +238,7 @@ class MetaObjectType(type):
         matrix = cls._matrix
         df = reduce(cls._pivot, [cls._view(arr, col) for arr, col in zip(response, matrix)])
         df['#timestamp'] = df['#timestamp'].dt.tz_localize('UTC')
-        df = df.reset_index().set_index('#index')
+        df = df.reset_index().set_index('#id')
         df, data = reduce(
             lambda acc, var_bind: cast(
                 Tuple[Any, Optional[Any]],

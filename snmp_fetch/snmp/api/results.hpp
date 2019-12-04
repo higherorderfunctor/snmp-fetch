@@ -5,8 +5,6 @@
 #ifndef NETFRAME__SNMP__API__RESULTS_HPP
 #define NETFRAME__SNMP__API__RESULTS_HPP
 
-#include <map>
-
 #include "types.hpp"
 
 // macro to align a number of bytes to 8 bytes

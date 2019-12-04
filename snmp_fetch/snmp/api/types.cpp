@@ -4,6 +4,8 @@
 
 #include <numeric>
 
+#include <boost/format.hpp>
+
 #include "types.hpp"
 #include "utils.hpp"
 
@@ -43,10 +45,10 @@ std::string ObjectIdentityParameter::to_string() {
   return str(
       boost::format(
         "ObjectIdentityParameter("
-        "start='%1%', "
+        "start=%1%, "
         "end=%2%)"
       )
-      % oid_to_string(this->start)
+      % (this->start.has_value() ? "'"+oid_to_string(*this->start)+"'" : "None")
       % (this->end.has_value() ? "'"+oid_to_string(*this->end)+"'" : "None")
   );
 }
@@ -69,6 +71,22 @@ std::string Community::to_string() {
       % this->string
   );
 }
+
+Host Host::snapshot() {
+    return {
+      this->id,
+      this->hostname,
+      !this->communities.empty()
+        ? (std::list<Community>) { this->communities.front() }
+        : (std::list<Community>) {},
+			this->parameters.has_value() && !this->parameters->empty()
+        ? (std::optional<std::list<ObjectIdentityParameter>>) {{ this->parameters->front() }}
+        : std::nullopt,
+      this->config
+    };
+  }
+
+Host Host::snapshot() const { return const_cast<Host*>(this)->snapshot(); }
 
 std::string Host::to_string() {
   std::optional<std::list<std::string>> communities = {};

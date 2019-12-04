@@ -150,7 +150,7 @@ def configs(
 
 
 def object_identity_parameters(
-        start: SearchStrategy[ObjectIdentity] = oids(),
+        start: SearchStrategy[Optional[ObjectIdentity]] = optionals(oids()),
         end: SearchStrategy[Optional[ObjectIdentity]] = optionals(oids())
 ) -> SearchStrategy[ObjectIdentityParameter]:
     """Generate an ObjectIdentityParameter."""
@@ -189,11 +189,15 @@ def hosts(
         parameters: SearchStrategy[Optional[Sequence[ObjectIdentityParameter]]] = (
             optionals(st.lists(object_identity_parameters()))
         ),
-        config: SearchStrategy[Optional[Config]] = st.one_of(st.none(), configs())
+        config: Union[SearchStrategy[Optional[Config]], Optional[Config]] = optionals(configs())
 ) -> SearchStrategy[Host]:
     """Generate a Host."""
     if isinstance(hostname, AbstractSequence):
         hostname = st.one_of([st.just(h) for h in hostname])
+    if config is None:
+        config = st.none()
+    if isinstance(config, Config):
+        config = st.just(config)
     return st.builds(
         Host,
         host_id,
@@ -226,6 +230,7 @@ def snmp_error_types(
 
 
 def snmp_errors(
+        host: SearchStrategy[Host] = hosts(),
         error_type: SearchStrategy[SnmpErrorType] = snmp_error_types(),
         sys_errno: SearchStrategy[Optional[int]] = optionals(int64s()),
         snmp_errno: SearchStrategy[Optional[int]] = optionals(int64s()),
@@ -239,6 +244,7 @@ def snmp_errors(
     return st.builds(
         SnmpError,
         error_type,
+        host,
         sys_errno,
         snmp_errno,
         err_stat,
@@ -249,10 +255,10 @@ def snmp_errors(
 
 
 ########################
-# 
-# 
-# 
-# 
+#
+#
+#
+#
 # def valid_hosts() -> (
 #         hypothesis.searchstrategy.strategies.SearchStrategy[Sequence[Tuple[int, Text, Text]]]
 # ):
@@ -261,8 +267,8 @@ def snmp_errors(
 #         VALID_HOSTNAMES,
 #         VALID_COMMUNITIES
 #     )
-# 
-# 
+#
+#
 # def invalid_hosts() -> (
 #         hypothesis.searchstrategy.strategies.SearchStrategy[Sequence[Tuple[int, Text, Text]]]
 # ):
@@ -271,8 +277,8 @@ def snmp_errors(
 #         INVALID_HOSTNAMES,
 #         VALID_COMMUNITIES
 #     )
-# 
-# 
+#
+#
 # def timeout_hosts() -> (
 #         hypothesis.searchstrategy.strategies.SearchStrategy[Sequence[Tuple[int, Text, Text]]]
 # ):
@@ -281,8 +287,8 @@ def snmp_errors(
 #         TIMEOUT_HOSTNAMES,
 #         VALID_COMMUNITIES
 #     )
-# 
-# 
+#
+#
 # def dtypes() -> hypothesis.searchstrategy.strategies.SearchStrategy[np.dtype]:
 #     """Generate a dtype."""
 #     return st.one_of([
@@ -292,8 +298,8 @@ def snmp_errors(
 #         st.just(np.uint64),
 #         st.just(np.dtype('S256'))
 #     ])
-# 
-# 
+#
+#
 # def dtype_structs() -> (
 #         hypothesis.searchstrategy.strategies.SearchStrategy[Sequence[Tuple[Text, np.dtype]]]
 # ):
@@ -307,16 +313,16 @@ def snmp_errors(
 #             )
 #         ), min_size=1, unique_by=lambda x: x[0]
 #     )
-# 
-# 
-# 
-# 
-# 
-# 
+#
+#
+#
+#
+#
+#
 # def invalid_text_oids() -> hypothesis.searchstrategy.strategies.SearchStrategy[Text]:
 #     """Generate invalid text oids."""
 #     return st.text().filter(
 #         lambda x: re.match(r'^\.?\d+(\.\d+)*$', x) is None
 #     )
-# 
-# 
+#
+#

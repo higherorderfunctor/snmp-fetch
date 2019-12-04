@@ -4,21 +4,21 @@
 
 #include "session.hpp"
 
-// TODO might be needed #include <list>
-//
+#include <algorithm>
 
 extern "C" {
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
+#include <debug.h>
 }
 
 namespace netframe::snmp::api {
 
-void *
+void*
 create_netsnmp_session(
-    Host& host,
+    const Host& host,
     std::vector<SnmpError>& errors,
-    std::optional<Config>& config
+    const std::optional<Config>& config
 ) {
 
   // init a net-snmp session template
@@ -28,31 +28,33 @@ create_netsnmp_session(
   // configure the session template
   session.peername = strdup(host.hostname.c_str());
   session.retries = host.config.has_value()
-                      ? (host.config->retries > 1 ? host.config->retries : 1)
+                      ? ( host.config->retries >= 0 ? host.config->retries : -1 )
                       : config.has_value()
-                        ? (config->retries >= 0 ? config->retries : -1)
+                        ? ( config->retries >= 0 ? config->retries : -1 )
                         : DEFAULT_RETRIES;
   session.timeout = host.config.has_value()
-                      ? (host.config->timeout > 1 ? host.config->timeout : 1)
+                      ? (host.config->timeout >= 0 ? host.config->timeout * ONE_SEC : -1 )
                       : config.has_value()
-                        ? (config->timeout >= 0 ? config->timeout : -1)
+                        ? ( config->timeout >= 0 ? config->timeout * ONE_SEC : -1 )
                         : DEFAULT_TIMEOUT;
   session.community = (u_char *)strdup(host.communities.front().string.c_str());
   session.community_len = strlen((char *)session.community);
   session.version = host.communities.front().version;
 
   // open the session
-  void *sp = snmp_sess_open(&session);
+  void* sptr = snmp_sess_open(&session);
+
+  DB_TRACELOC(0, "SESSION_ADDRESS: %u\n", sptr);
 
   // log the error upon session creation failure
-  if (sp == NULL) {
+  if (sptr == NULL) {
     char *message;
     int sys_errno;
     int snmp_errno;
     snmp_error(&session, &errno, &snmp_errno, &message);
     errors.push_back((SnmpError) {
         SESSION_ERROR,
-        host,
+        host.snapshot(),
         sys_errno,
         snmp_errno,
         {},
@@ -60,70 +62,76 @@ create_netsnmp_session(
         {},
         std::string(message)
     });
+    DB_TRACELOC(0, "%s\n", errors.back().to_string().c_str());
     SNMP_FREE(session.peername);
     SNMP_FREE(session.community);
     SNMP_FREE(message);
+  } else {
+    DB_TRACELOC(0, "SESSION_HOSTNAME: %s\n", session.peername);
+    DB_TRACELOC(0, "SESSION_VERSION: %u\n", session.version);
+    DB_TRACELOC(0, "SESSION_COMMUNITY: %s\n", session.community);
+    DB_TRACELOC(0, "SESSION_COMMUNITY_LENGTH: %u\n", session.community_len);
+    DB_TRACELOC(0, "SESSION_RETRIES: %d\n", session.retries);
+    DB_TRACELOC(0, "SESSION_TIMEOUT: %d\n", session.timeout);
   }
 
-  return sp;
+  return sptr;
 
 }
 
 void create_session(
-    PduType pdu_type,
-    Host& host,
-    std::vector<NullVarBind>& null_var_binds,
+    const PduType pdu_type,
+    const Host& host,
+    const std::vector<NullVarBind>& null_var_binds,
     std::vector<std::vector<uint8_t>>& results,
     std::vector<SnmpError>& errors,
-    std::optional<Config>& config,
-    std::list<AsyncSession>& sessions
+    const std::optional<Config>& config,
+    std::list<AsyncSession>& active_sessions
 ) {
 
-    // create the net-snmp session
-    void *session = create_netsnmp_session(host, errors, config);
+    void* sptr = create_netsnmp_session(host, errors, config);
 
     // If session creation failed, do not add a session.  create_session is responsible for
-    // populating the errors list.  The caller is responsible for discarding the host.
-    if (session == NULL)
+    // populating the errors list; the caller is responsible for discarding the host.
+    if (sptr == NULL)
       return;
 
-    // Create a vector of vectors of NullVarBinds to collect.  These vectors represent the
-    // partitioning of variable bindings by config.max_var_binds_per_pdu.  These variable bindings
-    // define the work needed on the session and are seeded with the var_binds from the caller.
-    std::vector<std::vector<ObjectIdentity>> next_var_binds;
-    // iterate through the request var_binds and populate each vector
-    for(auto&& vb: null_var_binds) {
-      // if the base vector is empty or max_var_binds_per_pdu has been reached in the last vector,
+    // Create a vector of vectors of ObjectIdentities to collect.  These vectors represent the
+    // partitioning of OIDs by that define the work needed on the session and are seeded with
+    // the null_var_binds from the caller.
+    std::vector<std::vector<ObjectIdentity>> next_object_identities;
+    // iterate through the request null_var_binds and populate each vector
+    for(auto&& vt: null_var_binds) {
+      // if the base vector is empty or var_binds_per_pdu has been reached in the last vector,
       // add another partition.
       if (
-          next_var_binds.empty() ||
-          next_var_binds.back().size() == (
-            config.has_value()
-              ? config->var_binds_per_pdu
-              : DEFAULT_VAR_BINDS_PER_PDU
+          next_object_identities.empty() ||
+          next_object_identities.back().size() == (
+            host.config.has_value()
+              ? host.config->var_binds_per_pdu
+              : config.has_value()
+                ? config->var_binds_per_pdu
+                : DEFAULT_VAR_BINDS_PER_PDU
           )
       )
-        next_var_binds.push_back(std::vector<ObjectIdentity>());
+        next_object_identities.push_back(std::vector<ObjectIdentity>());
       // add the var_bind to the last partition
-      next_var_binds.back().push_back(vb.oid);
+      next_object_identities.back().push_back(vt.oid);
     }
 
-    // create a state wrapped session for net-snmp callbacks
-    auto st = (AsyncSession) {
+    // append the session to the active sessions list
+    active_sessions.push_back((AsyncSession) {
       ASYNC_IDLE,
-      session,
+      sptr,
       pdu_type,
-      &host,
+      host,
       0,
       &null_var_binds,
-      next_var_binds,  // copy on assignment
+      next_object_identities,
       &results,
       &errors,
       &config
-    };
-
-    // append the state wrapped session to the sessions list
-    sessions.push_back(st);
+    });
 
 }
 
@@ -136,29 +144,29 @@ void close_completed_sessions(
   for (auto st = sessions.begin(); st != sessions.end();) {
     // skip non-idle sessions
     if (st->async_status == ASYNC_IDLE) {
-      // check if there are any next_var_bind partitions (potentially defined work)
-      if (!st->next_var_binds.empty()) {
-        // if there is potential work, verify all next_var_binds are non-empty in the current partition
+      // check if there are any partitions (potentially defined work)
+      if (!st->next_object_identities.empty()) {
+        // if there is potential work, verify all OIDs are non-empty in the current partition
         if (
             std::all_of(
-              st->next_var_binds.front().begin(),
-              st->next_var_binds.front().end(),
-              [](auto& vb) { return vb.empty(); }
+              st->next_object_identities.front().begin(),
+              st->next_object_identities.front().end(),
+              [](auto& oid) { return oid.empty(); }
             )
         )
           // if all var_binds are empty, the work is complete, so remove the partition
-          st->next_var_binds.erase(st->next_var_binds.begin());
+          st->next_object_identities.erase(st->next_object_identities.begin());
         // otherwise, rotate the partitions to interleave var_binds from other partitions
         else
           std::rotate(
-              st->next_var_binds.begin(),
-              st->next_var_binds.begin() + 1,
-              st->next_var_binds.end()
+              st->next_object_identities.begin(),
+              st->next_object_identities.begin() + 1,
+              st->next_object_identities.end()
           );
       }
 
       // if there are no partitions left, close the session
-      if (st->next_var_binds.empty()) {
+      if (st->next_object_identities.empty()) {
         // close the net-snmp session
         snmp_sess_close(st->netsnmp_session);
         // remove the session

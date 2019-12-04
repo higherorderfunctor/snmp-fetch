@@ -10,6 +10,10 @@
 #include "asyncio.hpp"
 #include "utils.hpp"
 
+extern "C" {
+#include "debug.h"
+}
+
 namespace py = pybind11;
 
 namespace netframe::snmp::api {
@@ -33,20 +37,18 @@ as_pyarray(Sequence& seq) {
 
 std::tuple<std::vector<py::array_t<uint8_t>>, std::vector<SnmpError>>
 dispatch(
-    PduType pdu_type,
-    std::list<Host> hosts,
-    std::vector<NullVarBind> null_var_binds,
-    std::optional<Config> config,
-    uint64_t max_active_async_sessions
+    const PduType pdu_type,
+    const std::vector<Host> hosts,
+    const std::vector<NullVarBind> null_var_binds,
+    const std::optional<Config> config,
+    const uint64_t max_active_async_sessions
 ) {
 
-  // Perform parameter validation.  Outside of this section, nothing should be thrown.
-  // Pybind11 does most of the checks via the type system conversion.
+  DB_TRACELOC(0, "DEBUG MODE ENABLED\n");
+
   if (hosts.empty())
     throw std::runtime_error("No hosts supplied");
 
-  // TODO: test non-unqiue community indexes
- 
   if (null_var_binds.empty())
     throw std::runtime_error("No variable bindings supplied");
 
@@ -57,7 +59,7 @@ dispatch(
   // loop through 0..n-1 var_binds as 'it'
   for (auto it = null_var_binds.begin(); it != std::next(null_var_binds.end(), -1); ++it)
     // loop through it..n var_binds as 'jt'
-    for (auto jt = std::next(it, 1); jt != null_var_binds.end(); ++jt)
+    for (auto jt = std::next(it); jt != null_var_binds.end(); ++jt)
       // Check if either is a subtree of the other.  This comparison checks to the length of the
       // shortest oid.  If the result is 0, one is a subtree of the other or equal which fails the
       // check.
@@ -196,10 +198,10 @@ PYBIND11_MODULE(api, m) {
   py::class_<ObjectIdentityParameter>(m, "ObjectIdentityParameter")
     .def(
         py::init<
-          ObjectIdentity,
+          std::optional<ObjectIdentity>,
           std::optional<ObjectIdentity>
         >(),
-        py::arg("start"),
+        py::arg("start") = std::nullopt,
         py::arg("end") = std::nullopt
     )
     .def_readwrite("start", &ObjectIdentityParameter::start)
@@ -218,7 +220,7 @@ PYBIND11_MODULE(api, m) {
       },
       [](py::tuple t) {
         return (ObjectIdentityParameter) {
-            t[0].cast<ObjectIdentity>(),
+            t[0].cast<std::optional<ObjectIdentity>>(),
             t[1].cast<std::optional<ObjectIdentity>>()
           };
       }
@@ -279,6 +281,7 @@ PYBIND11_MODULE(api, m) {
     .def_readwrite("communities", &Host::communities)
     .def_readwrite("parameters", &Host::parameters)
     .def_readwrite("config", &Host::config)
+    .def("snapshot", [](Host& host) { return host.snapshot(); })
     .def("__eq__", [](Host& a, const Host& b) {
         return a == b;
     }, py::is_operator())

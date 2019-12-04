@@ -1,4 +1,4 @@
-# pylint: disable=missing-class-docstring, too-few-public-methods, unused-argument
+# pylint: disable=missing-class-docstring, too-few-public-methods, unused-argument, no-self-use
 # pylint: disable=too-many-arguments, redefined-builtin, missing-function-docstring
 """netframe::snmp::api C++ extension stub."""
 
@@ -47,12 +47,12 @@ class Config:  # noqa: D101
 
 class ObjectIdentityParameter:  # noqa: D101
 
-    start: ObjectIdentity
+    start: Optional[ObjectIdentity]
     end: Optional[ObjectIdentity]
 
     def __init__(  # noqa: D107
         self,
-        start: ObjectIdentity,
+        start: ObjectIdentity = ...,
         end: Optional[ObjectIdentity] = ...,
     ) -> None: ...
 
@@ -68,7 +68,7 @@ class Community:  # noqa: D101
 
     def __init__(  # noqa: D107
         self,
-        version: Version,
+        version: Version = ...,
         string: Text
     ) -> None: ...
 
@@ -125,6 +125,10 @@ class SnmpError:  # noqa: D101
         err_oid: Optional[Sequence[int]] = ...,
         message: Optional[Text] = ...
     ) -> None: ...
+
+    def snapshot(  # noqa: D102
+        self
+    ) -> Host: ...
 
 
 def dispatch(  # noqa: D103

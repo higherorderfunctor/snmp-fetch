@@ -4,12 +4,15 @@
 
 #include "results.hpp"
 
+#include <map>
 #include <time.h>
 #include <boost/range/combine.hpp>
+#include <iostream>  // TODO remove
 
 extern "C" {
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>
+#include <debug.h>
 }
 
 namespace netframe::snmp::api {
@@ -32,7 +35,7 @@ void append_result(
     );
     session.errors->push_back((SnmpError) {
           VALUE_WARNING,
-          session.host->snapshot(),
+          session.host.snapshot(),
           {},
           {},
           {},
@@ -72,10 +75,10 @@ void append_result(
   size_t idx = it - session.null_var_binds->begin();
 
   // Get the last recorded response variable binding for the found root variable binding by looking
-  // at the associated next_var_binds slot.  Modulus is used due to partitioning with
+  // at the associated next_object_identities slot.  Modulus is used due to partitioning with
   // var_binds_per_pdu.  WARNING: if ambiguous OIDs are allowed and they cross partitions,
   // this will likely pick the wrong index in the partition and, at worst, segfault.
-  auto& last_var_bind = session.next_var_binds.front()[
+  auto& last_var_bind = session.next_object_identities.front()[
     idx % (session.config->has_value() ? (*session.config)->var_binds_per_pdu : DEFAULT_VAR_BINDS_PER_PDU)
   ];
 
@@ -151,7 +154,7 @@ void append_result(
   // copy the host id
   memcpy(
       &result[pos],
-      &session.host->id,
+      &session.host.id,
       sizeof(uint64_t)
   );
   // copy the community index
@@ -207,6 +210,8 @@ int async_cb(
     void *magic
 ) {
 
+  DB_TRACELOC(0, "PDU_RCV_OP_CODE: %d\n", op);
+
   // deconstruct the session
   auto& session = *(AsyncSession *)magic;
 
@@ -215,11 +220,12 @@ int async_cb(
 
   // create a reference to the last collected variable bindings in the current
   // parition (copy on assignment)
-  std::vector<ObjectIdentity> last_var_binds = session.next_var_binds.front();
+  std::vector<ObjectIdentity> last_var_binds = session.next_object_identities.front();
 
   // handle each op code
   switch (op) {
     case NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE:
+      DB_TRACE(0, "CALLBACK_OP_RECEIVED_MESSAGE: %s\n", session.host.snapshot().to_string().c_str());
       // check that the PDU was allocated
       if (pdu) {
         // check the correct type of PDU was returned in the response
@@ -243,7 +249,7 @@ int async_cb(
             err_var_bind.assign(vp->name, vp->name + vp->name_length);
             session.errors->push_back((SnmpError) {
                   BAD_RESPONSE_PDU_ERROR,
-                  session.host->snapshot(),
+                  session.host.snapshot(),
                   {},
                   {},
                   pdu->errstat,
@@ -252,12 +258,12 @@ int async_cb(
                   std::string(snmp_errstring(pdu->errstat))
             });
             // clear all work for this session
-            session.next_var_binds.clear();
+            session.next_object_identities.clear();
           }
         } else {
           session.errors->push_back((SnmpError) {
               BAD_RESPONSE_PDU_ERROR,
-              session.host->snapshot(),
+              session.host.snapshot(),
               {},
               SNMPERR_PROTOCOL,
               {},
@@ -268,12 +274,13 @@ int async_cb(
               "-PDU"
           });
           // clear all work for this session
-          session.next_var_binds.clear();
+          session.next_object_identities.clear();
         }
       } else {
+      DB_TRACE(0, "CALLBACK_OP_PDU_ERROR: %s\n", session.host.snapshot().to_string().c_str());
         session.errors->push_back((SnmpError) {
             CREATE_RESPONSE_PDU_ERROR,
-            session.host->snapshot(),
+            session.host.snapshot(),
             {},
             {},
             {},
@@ -282,13 +289,14 @@ int async_cb(
             "Failed to allocate memory for the response PDU"
         });
         // clear all work for this session
-        session.next_var_binds.clear();
+        session.next_object_identities.clear();
       }
       break;
     case NETSNMP_CALLBACK_OP_TIMED_OUT:
+      DB_TRACE(0, "CALLBACK_OP_TIMED_OUT: %s\n", session.host.snapshot().to_string().c_str());
       session.errors->push_back((SnmpError) {
             TIMEOUT_ERROR,
-            session.host->snapshot(),
+            session.host.snapshot(),
             {},
             SNMPERR_TIMEOUT,
             {},
@@ -297,12 +305,13 @@ int async_cb(
             "Timeout error"
       });
       // clear all work for this session
-      session.next_var_binds.clear();
+      session.next_object_identities.clear();
       break;
     case NETSNMP_CALLBACK_OP_SEND_FAILED:
+      DB_TRACE(0, "CALLBACK_OP_SEND_FAILED: %s\n", session.host.snapshot().to_string().c_str());
       session.errors->push_back((SnmpError) {
             ASYNC_PROBE_ERROR,
-            session.host->snapshot(),
+            session.host.snapshot(),
             {},
             {},
             {},
@@ -311,12 +320,13 @@ int async_cb(
             "Async probe error"
       });
       // clear all work for this session
-      session.next_var_binds.clear();
+      session.next_object_identities.clear();
       break;
     case NETSNMP_CALLBACK_OP_DISCONNECT:
+      DB_TRACE(0, "CALLBACK_OP_DISCONNECT: %s\n", session.host.snapshot().to_string().c_str());
       session.errors->push_back((SnmpError) {
             TRANSPORT_DISCONNECT_ERROR,
-            session.host->snapshot(),
+            session.host.snapshot(),
             std::nullopt,
             SNMPERR_ABORT,
             {},
@@ -325,21 +335,23 @@ int async_cb(
             "Transport disconnect error"
       });
       // clear all work for this session
-      session.next_var_binds.clear();
+      session.next_object_identities.clear();
       break;
     case NETSNMP_CALLBACK_OP_RESEND:
       // set the status to retry
+			std::cout <<  session.host.to_string() << std::endl;
+      DB_TRACE(0, "CALLBACK_OP_RESEND: %s\n", session.host.snapshot().to_string().c_str());
       session.async_status = ASYNC_RETRY;
       break;
   }
 
   // validate work for the next PDU if the session is idle and the work isn't already completed
-  if (session.async_status == ASYNC_IDLE && !session.next_var_binds.empty())
+  if (session.async_status == ASYNC_IDLE && !session.next_object_identities.empty())
     // zip the work that generated this request with the proposed work found when appending the
     // results
     for (
         const auto &&[last_oid, tail]:
-        boost::combine(last_var_binds, session.next_var_binds.front())
+        boost::combine(last_var_binds, session.next_object_identities.front())
     ) {
       auto& next_oid = boost::get<0>(tail);  // deconstruct the (OID, nil) tuple
       // if result OID did not increase from the request OID, mark the slot to no longer

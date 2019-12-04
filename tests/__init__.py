@@ -1,1 +1,1 @@
-"""Netframe SNMP module tests."""
+"""Netframe tests."""

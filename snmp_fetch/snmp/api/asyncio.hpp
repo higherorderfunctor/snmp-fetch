@@ -17,7 +17,7 @@ namespace netframe::snmp::api {
  */
 void async_sessions_send(
     std::list<AsyncSession>& sessions,
-    netsnmp_callback cb
+    const netsnmp_callback cb
 );
 
 
@@ -27,7 +27,7 @@ void async_sessions_send(
  * @param sessions Reference to a list of AsyncSessions.
  */
 void async_sessions_read(
-    std::list<AsyncSession>& sessions
+    const std::list<AsyncSession>& sessions
 );
 
 
@@ -44,13 +44,13 @@ void async_sessions_read(
  */
 void
 run(
-    PduType pdu_type,
-    std::list<Host> hosts,
-    std::vector<NullVarBind>& null_var_binds,
+    const PduType pdu_type,
+    const std::vector<Host>& hosts,
+    const std::vector<NullVarBind>& null_var_binds,
     std::vector<std::vector<uint8_t>>& results,
     std::vector<SnmpError>& errors,
-    std::optional<Config>& config,
-    uint64_t max_active_async_sessions
+    const std::optional<Config>& config,
+    const uint64_t max_active_async_sessions
 );
 
 }

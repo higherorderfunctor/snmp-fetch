@@ -4,12 +4,12 @@ from typing import Any, Iterator, Optional, Sequence, Text, Tuple, Type
 
 import numpy as np
 
-from . import PduType, SnmpConfig, SnmpError
-from .api import fetch as api_fetch
+from . import Community, Config, Host, PduType, SnmpError, Version
+from .api import dispatch as api_fetch
 from .object_type import ObjectType
 
 RESERVED_COL_NAMES = [
-    '#oid_size', '#result_size', '#result_type', '#oid', '#timestamp'
+    '#id', '#oid_size', '#result_size', '#result_type', '#oid', '#timestamp'
 ]
 
 HOST_T = Tuple[int, Text, Text]  # pylint: disable=invalid-name
@@ -20,14 +20,14 @@ def fetch(
         hosts: Sequence[HOST_T],
         var_bind: Type[ObjectType],
         parameter: Optional[Text] = None,
-        config: Optional[SnmpConfig] = None
+        config: Optional[Config] = None
 ) -> Tuple[Sequence[np.ndarray], Sequence[SnmpError]]:
     """Wrap the C API versions of fetch."""
     return api_fetch(
         pdu_type,
-        hosts,
+        [Host(i, h, [Community(Version.V2C, c)]) for i, h, c in hosts],
         var_bind.null_var_binds(parameter),
-        config=config if config is not None else SnmpConfig()
+        config=config if config is not None else Config()
     )
 
 
@@ -59,13 +59,13 @@ def distribute(
     if df.index.names is not None and [i for i in df.index.names if i is not None]:
         index = df.index.names
     df = df.reset_index()
-    df.index = df.index.set_names(['#index'])
+    df.index = df.index.set_names(['#id'])
     df = df.reset_index()
 
     def default_get_hosts(df: Any) -> Sequence[HOST_T]:
         return [
             (i, str(h), c) for i, h, c
-            in df[['#index', host_column, community_column]].values
+            in df[['#id', host_column, community_column]].values
         ]
 
     get_hosts = kwargs.pop('get_hosts', default_get_hosts)
@@ -73,7 +73,7 @@ def distribute(
     def _prepare(df: Any) -> Tuple[Sequence[HOST_T], Any, Optional[Sequence[Text]]]:
         return (
             get_hosts(df),
-            df.set_index('#index'),
+            df.set_index('#id'),
             index
         )
 

@@ -10,7 +10,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(PYBIND11_CPP_STANDARD -std=c++17)
 
 include_directories(lib/boost)
+include_directories(lib/soq/src/libsoq)
 include_directories(${CMAKE_BINARY_DIR}/include)
+
+if(DEFINED ENV{NETFRAME_DEBUG})
+  message(STATUS "Netframe debug mode enabled")
+  add_definitions(-DDEBUG)
+  set(CMAKE_BUILD_TYPE Debug)
+  message("Build type is " ${CMAKE_BUILD_TYPE})
+endif()
 
 # increase install speed with parallel builds
 ProcessorCount(N)
@@ -62,12 +70,15 @@ pybind11_add_module(api
   snmp_fetch/snmp/api/session.cpp
   snmp_fetch/snmp/api/types.cpp
   snmp_fetch/snmp/api/utils.cpp
+  lib/soq/src/libsoq/debug.c
+  lib/soq/src/libsoq/kludge.c
+  lib/soq/src/libsoq/stderr.c
 )
 
 SET(LIBS libnetsnmp OpenSSL::Crypto)
 
 if(DEFINED ENV{NETFRAME_COVERAGE})
-  message(STATUS "Coverage reporting enabled")
+  message(STATUS "Netframe overage reporting enabled")
   target_compile_options(api
     PRIVATE -O0 -ftest-coverage -fprofile-arcs
   )

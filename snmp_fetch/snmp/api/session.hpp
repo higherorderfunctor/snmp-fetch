@@ -18,11 +18,11 @@ namespace netframe::snmp::api {
  *
  * @return        Returns a void* to the net-snmp session object or NULL on failure.
  */
-void *
+void*
 create_netsnmp_session(
-    Host& host,
+    const Host& host,
     std::vector<SnmpError>& errors,
-    std::optional<Config>& config
+    const std::optional<Config>& config
 );
 
 
@@ -39,12 +39,12 @@ create_netsnmp_session(
  *                  appends to this list.
  */
 void create_session(
-    PduType pdu_type,
-    Host& host,
-    std::vector<NullVarBind>& null_var_binds,
+    const PduType pdu_type,
+    const Host& host,
+    const std::vector<NullVarBind>& null_var_binds,
     std::vector<std::vector<uint8_t>>& results,
     std::vector<SnmpError>& errors,
-    std::optional<Config>& config,
+    const std::optional<Config>& config,
     std::list<AsyncSession>& sessions
 );
 

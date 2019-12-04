@@ -5,7 +5,7 @@ from typing import Any, Callable, Mapping, Optional, Sequence, Text, Tuple, Type
 
 import numpy as np
 
-from .fp.maybe import Maybe
+from snmp_fetch.fp.maybe import Maybe
 from .object_type import ObjectType
 
 DTYPE_FIELDS_T = (  # pylint: disable=invalid-name

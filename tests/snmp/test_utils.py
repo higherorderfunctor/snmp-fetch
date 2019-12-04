@@ -1,18 +1,19 @@
 """Variable binding tests."""
 
+import re
 from typing import List, Text
 
 import hypothesis
 import hypothesis.strategies as st
 import pytest
 
-from snmp_fetch.utils import validate_oid
-from tests import strategies as _st
+from snmp_fetch.snmp.utils import validate_oid
+from .strategies import oids
 
 
 @hypothesis.given(
     prefix=st.one_of(st.just(''), st.just('.')),  # type: ignore
-    oid=_st.oids()
+    oid=oids()
 )
 def test_validate_oid(prefix: Text, oid: List[int]) -> None:
     """Test validating an oid."""
@@ -24,7 +25,9 @@ def test_validate_oid(prefix: Text, oid: List[int]) -> None:
 
 
 @hypothesis.given(
-    oid=_st.invalid_oids()  # type: ignore
+    oid=st.text().filter(  # type: ignore
+        lambda x: re.match(r'^\.?\d+(\.\d+)*$', x) is None
+    )
 )
 def test_validate_invalid_oid(oid: Text) -> None:
     """Test validating an invalid oid."""

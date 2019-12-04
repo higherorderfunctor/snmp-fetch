@@ -34,3 +34,21 @@ def test_host_to_string(  # type: ignore
         f'parameters={str(host.parameters) if host.parameters else None}, '
         f'config={str(host.config)})'
     )
+
+
+@hypothesis.given(
+    host=hosts()
+)
+def test_host_snapshot(  # type: ignore
+        host: Host
+) -> None:
+    """Test repr and str on a Host."""
+    snapshot = host.snapshot()
+    assert str(snapshot) == (
+        f'Host('
+        f'id={host.id}, '
+        f'hostname=\'{host.hostname}\', '
+        f'communities={str(host.communities[:1])}, '
+        f'parameters={str(host.parameters[:1]) if host.parameters else None}, '
+        f'config={str(host.config)})'
+    )

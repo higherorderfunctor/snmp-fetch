@@ -39,11 +39,11 @@ namespace netframe::snmp::api {
  */
 std::tuple<std::vector<py::array_t<uint8_t>>, std::vector<SnmpError>>
 dispatch(
-    PduType pdu_type,
-    std::list<Host> hosts,
-    std::vector<NullVarBind> null_var_binds,
-    std::optional<Config> config,
-    uint64_t max_active_sessions
+    const PduType pdu_type,
+    const std::vector<Host> hosts,
+    const std::vector<NullVarBind> null_var_binds,
+    const std::optional<Config> config,
+    const uint64_t max_active_sessions
 );
 
 }

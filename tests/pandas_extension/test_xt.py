@@ -10,7 +10,6 @@ import pandas as pd
 from hypothesis.extra.numpy import arrays, from_dtype
 from hypothesis.searchstrategy.strategies import SearchStrategy
 
-from snmp_fetch import SnmpConfig
 from snmp_fetch.pandas_extension import xt
 from snmp_fetch.pandas_extension.utils import column_names
 
