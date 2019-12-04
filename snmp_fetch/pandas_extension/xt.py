@@ -20,14 +20,19 @@ class ArrayExtractSeriesAccessor:
     # def __getattr__(self, name) -> Any:
 
     def __getitem__(self, ss: Union[int, slice, Tuple[Union[int, slice], ...]]) -> Any:
-        """Slice the buffer."""
+        """Slice the buffer.
+
+        Note: All arrays are assumed to be the same length.
+        """
         if self.obj.empty:
             return self.obj
+        if isinstance(ss, tuple) and len(ss) == 1:
+            ss = ss[0]
         arr = np.array(self.obj.values.tolist())
         if isinstance(ss, int):
-            return pd.Series(arr[:, ss]).rename(self.obj.name)
+            return pd.Series(arr[:, ss], index=self.obj.index).rename(self.obj.name)
         if isinstance(ss, slice):
-            return pd.Series(tuple(arr[:, ss])).rename(self.obj.name)
+            return pd.Series(tuple(arr[:, ss]), index=self.obj.index).rename(self.obj.name)
         return pd.DataFrame(
             dict(zip(column_names(len(ss)), [
                 arr[:, s] if isinstance(s, int) else tuple(arr[:, s]) for s in ss
