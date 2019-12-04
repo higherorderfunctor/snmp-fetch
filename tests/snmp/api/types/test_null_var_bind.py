@@ -9,9 +9,9 @@ from tests.snmp.strategies import null_var_binds
 
 
 @hypothesis.given(
-    null_var_bind=null_var_binds()
+    null_var_bind=null_var_binds()  # type: ignore
 )
-def test_pickle_null_var_bind(  # type: ignore
+def test_pickle_null_var_bind(
         null_var_bind: NullVarBind
 ) -> None:
     """Test pickling a NullVarBind."""
@@ -19,9 +19,9 @@ def test_pickle_null_var_bind(  # type: ignore
 
 
 @hypothesis.given(
-    null_var_bind=null_var_binds()
+    null_var_bind=null_var_binds()  # type: ignore
 )
-def test_null_var_bind_to_string(  # type: ignore
+def test_null_var_bind_to_string(
         null_var_bind: NullVarBind
 ) -> None:
     """Test repr and str on a NullVarBind."""

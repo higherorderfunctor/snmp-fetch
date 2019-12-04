@@ -9,9 +9,9 @@ from tests.snmp.strategies import hosts
 
 
 @hypothesis.given(
-    host=hosts()
+    host=hosts()  # type: ignore
 )
-def test_pickle_host(  # type: ignore
+def test_pickle_host(
         host: Host
 ) -> None:
     """Test pickling a Host."""
@@ -19,9 +19,9 @@ def test_pickle_host(  # type: ignore
 
 
 @hypothesis.given(
-    host=hosts()
+    host=hosts()  # type: ignore
 )
-def test_host_to_string(  # type: ignore
+def test_host_to_string(
         host: Host
 ) -> None:
     """Test repr and str on a Host."""
@@ -37,9 +37,9 @@ def test_host_to_string(  # type: ignore
 
 
 @hypothesis.given(
-    host=hosts()
+    host=hosts()  # type: ignore
 )
-def test_host_snapshot(  # type: ignore
+def test_host_snapshot(
         host: Host
 ) -> None:
     """Test repr and str on a Host."""

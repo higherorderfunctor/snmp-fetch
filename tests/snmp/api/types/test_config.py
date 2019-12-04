@@ -9,9 +9,9 @@ from tests.snmp.strategies import configs
 
 
 @hypothesis.given(
-    config=configs()
+    config=configs()  # type: ignore
 )
-def test_pickle_config(  # type: ignore
+def test_pickle_config(
         config: Config
 ) -> None:
     """Test pickling an Config."""
@@ -19,9 +19,9 @@ def test_pickle_config(  # type: ignore
 
 
 @hypothesis.given(
-    config=configs()
+    config=configs()  # type: ignore
 )
-def test_config_to_string(  # type: ignore
+def test_config_to_string(
         config: Config
 ) -> None:
     """Test str and repr on an Config."""

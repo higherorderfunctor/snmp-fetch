@@ -13,8 +13,9 @@ from .distributed import fetch as distributed_fetch
 from .object_type import ObjectType
 
 __all__ = [
-    # TODO: sort
-    'Version', 'PduType', 'Community', 'Host', 'Config', 'SnmpErrorType', 'object_type', 'pipeline_hook'
+    'Community', 'Config', 'Host', 'PduType', 'SnmpError', 'SnmpErrorType', 'Version',
+    'object_type',
+    'ObjectType', 'pipeline_hook'
 ]
 
 

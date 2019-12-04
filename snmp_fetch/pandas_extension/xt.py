@@ -1,6 +1,6 @@
 """Extended DataFrame functionality."""
 
-from typing import Any, Iterator, Optional, Sequence, Text, Tuple, Union, cast
+from typing import Any, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ class ArrayExtractSeriesAccessor:
         """Initialize the pandas extension."""
         self.obj = obj
 
-    #def __getattr__(self, name) -> Any:
+    # def __getattr__(self, name) -> Any:
 
     def __getitem__(self, ss: Union[int, slice, Tuple[Union[int, slice], ...]]) -> Any:
         """Slice the buffer."""

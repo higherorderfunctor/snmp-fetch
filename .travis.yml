@@ -54,10 +54,10 @@ install:
   - pip install cpp-coveralls python-coveralls
 
 script:
-  #- poetry run pylint snmp_fetch tests
-  #- poetry run flake8 snmp_fetch tests
-  #- MYPYPATH=stubs/linux-x86_64-${BASE_PYTHON_VERSION} poetry run mypy -p snmp_fetch -p tests
-  #- poetry run bandit -r snmp_fetch
+  - poetry run pylint snmp_fetch tests plugins
+  - poetry run flake8 snmp_fetch tests plugins
+  - MYPYPATH=stubs/linux-x86_64-${BASE_PYTHON_VERSION} poetry run mypy -p snmp_fetch -p tests -p plugins
+  - poetry run bandit -r snmp_fetch
   - poetry run pytest -v tests/api/test_snmp_config.py --cov
 
 after_success:

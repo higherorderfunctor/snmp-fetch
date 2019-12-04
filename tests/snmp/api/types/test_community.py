@@ -9,9 +9,9 @@ from tests.snmp.strategies import communities
 
 
 @hypothesis.given(
-    community=communities()
+    community=communities()  # type: ignore
 )
-def test_pickle_community(  # type: ignore
+def test_pickle_community(
         community: Community
 ) -> None:
     """Test pickling an Community."""
@@ -19,9 +19,9 @@ def test_pickle_community(  # type: ignore
 
 
 @hypothesis.given(
-    community=communities()
+    community=communities()  # type: ignore
 )
-def test_community_to_string(  # type: ignore
+def test_community_to_string(
         community: Community
 ) -> None:
     """Test str and repr on an SnmpCommunity."""

@@ -68,7 +68,7 @@ class Community:  # noqa: D101
 
     def __init__(  # noqa: D107
         self,
-        version: Version = ...,
+        version: Version,
         string: Text
     ) -> None: ...
 
@@ -89,6 +89,10 @@ class Host:  # noqa: D101
         parameters: Optional[List[ObjectIdentityParameter]] = ...,
         config: Optional[Config] = ...
     ) -> None: ...
+
+    def snapshot(  # noqa: D102
+        self
+    ) -> 'Host': ...
 
 
 class SnmpErrorType(type):  # noqa: D101
@@ -125,10 +129,6 @@ class SnmpError:  # noqa: D101
         err_oid: Optional[Sequence[int]] = ...,
         message: Optional[Text] = ...
     ) -> None: ...
-
-    def snapshot(  # noqa: D102
-        self
-    ) -> Host: ...
 
 
 def dispatch(  # noqa: D103

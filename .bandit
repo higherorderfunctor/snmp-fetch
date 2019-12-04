@@ -1,14 +1,3 @@
 [bandit]
 exclude_dir: 
-  - build
-  - ENV
-  - .git
-  - htmlcov
-  - .hypothesis
-  - .mypy_cache
-  - pip-wheel-metadata
   - __pycache__
-  - .pytest_cache
-  - snmp_fetch.egg-info
-  - src
-  - stubs

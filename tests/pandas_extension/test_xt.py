@@ -1,16 +1,14 @@
 """SNMP config test cases."""
 
-import pickle
 from typing import Sequence, Text, Tuple, Union
 
 import hypothesis
 import hypothesis.strategies as st
 import numpy as np
 import pandas as pd
-from hypothesis.extra.numpy import arrays, from_dtype
-from hypothesis.searchstrategy.strategies import SearchStrategy
+from hypothesis.extra.numpy import arrays
 
-from snmp_fetch.pandas_extension import xt
+from snmp_fetch.pandas_extension import xt  # pylint: disable=unused-import # noqa: F401
 from snmp_fetch.pandas_extension.utils import column_names
 
 
@@ -37,7 +35,7 @@ def array_and_indicies(  # type: ignore
     return (array, indicies)
 
 
-# TODO: maintain index / multiindex even on series
+# FUTURE: maintain index / multiindex even on series
 @hypothesis.given(
     column=st.text('ABCDEFGHIJKLMNOPQRSTUVWXYZ', min_size=1, max_size=2),  # type: ignore
     arr_is=array_and_indicies()  # pylint: disable=no-value-for-parameter
@@ -63,9 +61,9 @@ def test_get_int_item(
         else:
             safe_impl_df = pd.concat(
                 [
-                    df[column].apply(lambda x: x.astype(array.dtype.type)[i]).rename(n)
+                    df[column].apply(lambda x, i=i: x.astype(array.dtype.type)[i]).rename(n)
                     if isinstance(i, int) else
-                    df[column].apply(lambda x: x.astype(array.dtype.type)[i]).rename(n)
+                    df[column].apply(lambda x, i=i: x.astype(array.dtype.type)[i]).rename(n)
                     for n, i in zip(column_names(len(indicies)), indicies)
                 ],
                 axis=1
