@@ -3,8 +3,3 @@
 	url = https://github.com/pybind/pybind11.git
 	branch = v2.4.3
 	shallow = true
-[submodule "Catch2"]
-	path = lib/Catch2
-	url = https://github.com/catchorg/Catch2.git
-	branch = v2.10.2
-	shallow = true
