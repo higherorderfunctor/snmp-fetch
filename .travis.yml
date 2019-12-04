@@ -58,8 +58,8 @@ script:
   - poetry run flake8 snmp_fetch tests plugins
   - MYPYPATH=stubs/linux-x86_64-${BASE_PYTHON_VERSION} poetry run mypy -p snmp_fetch -p tests -p plugins
   - poetry run bandit -r snmp_fetch
-  - poetry run pytest -v tests/api/test_snmp_config.py --cov
+  - poetry run pytest -v tests --cov
 
 after_success:
-  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-${BASE_PYTHON_VERSION}/CMakeFiles/api.dir/snmp_fetch/api/ --gcov-options '\-lp' -i snmp_fetch/api --dump cpp-coveralls.json 
+  - cpp-coveralls --gcov="${COV}" -b build/temp.linux-x86_64-${BASE_PYTHON_VERSION}/CMakeFiles/api.dir/snmp_fetch/snmp/api/ --gcov-options '\-lp' -i snmp_fetch/snmp/api --dump cpp-coveralls.json 
   - coveralls --merge_file cpp-coveralls.json
