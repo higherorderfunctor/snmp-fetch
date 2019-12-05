@@ -134,10 +134,10 @@ def null_var_binds(
 
 
 def configs(
-        retries: SearchStrategy[int] = int64s(),
-        timeout: SearchStrategy[int] = int64s(),
-        var_binds_per_pdu: SearchStrategy[int] = uint64s(),
-        bulk_repetitions: SearchStrategy[int] = uint64s()
+        retries: SearchStrategy[int] = int64s(min_value=0, max_value=1),
+        timeout: SearchStrategy[int] = int64s(min_value=0, max_value=1),
+        var_binds_per_pdu: SearchStrategy[int] = uint64s(min_value=1, max_value=10),
+        bulk_repetitions: SearchStrategy[int] = int64s(min_value=0, max_value=10)
 ) -> SearchStrategy[Config]:
     """Generate a Config."""
     return st.builds(
@@ -185,7 +185,9 @@ def communities(
 def hosts(
         host_id: SearchStrategy[int] = uint64s(),
         hostname: Union[SearchStrategy[Text], Sequence[Text]] = st.text(),
-        community_list: SearchStrategy[Sequence[Community]] = st.lists(communities()),
+        community_list: SearchStrategy[Sequence[Community]] = st.lists(
+            communities(), min_size=1, max_size=10
+        ),
         parameters: SearchStrategy[Optional[Sequence[ObjectIdentityParameter]]] = (
             optionals(st.lists(object_identity_parameters()))
         ),

@@ -8,9 +8,10 @@ import numpy as np
 import pytest
 from numpy.random import choice, seed
 
-from snmp_fetch.snmp.api import Host, NullVarBind, PduType, SnmpErrorType, dispatch
+from snmp_fetch.snmp.api import Config, Host, NullVarBind, PduType, SnmpErrorType, dispatch
 from tests.snmp.strategies import (
-    VALID_COMMUNITIES, VALID_HOSTNAMES, Config, communities, hosts, null_var_binds, oids, pdu_types
+    TIMEOUT_HOSTNAMES, VALID_COMMUNITIES, VALID_HOSTNAMES, communities, configs, hosts,
+    null_var_binds, oids, pdu_types
 )
 
 
@@ -18,6 +19,32 @@ def sample2_null_var_binds(a: NullVarBind, b: NullVarBind) -> Sequence[NullVarBi
     """Sample two ambiguous NullVarBinds."""
     seed()
     return cast(Sequence[NullVarBind], choice([a, b], 2))
+
+
+@hypothesis.given(
+    pdu_type=pdu_types(),  # type: ignore
+    var_binds=st.lists(null_var_binds(), max_size=10)
+)
+def test_no_hosts(
+        pdu_type: PduType,
+        var_binds: Sequence[NullVarBind]
+) -> None:
+    """Test no hosts."""
+    with pytest.raises(RuntimeError):
+        dispatch(pdu_type, [], var_binds)
+
+
+@hypothesis.given(
+    pdu_type=pdu_types(),  # type: ignore
+    host_list=st.lists(hosts(), min_size=1, max_size=10)
+)
+def test_no_null_var_binds(
+        pdu_type: PduType,
+        host_list: Sequence[Host]
+) -> None:
+    """Test no null var binds."""
+    with pytest.raises(RuntimeError):
+        dispatch(pdu_type, host_list, [])
 
 
 @hypothesis.given(
@@ -40,6 +67,61 @@ def test_ambiguous_root_oids(
     """Test ambiguous root oids."""
     with pytest.raises(ValueError):
         dispatch(pdu_type, host_list, var_binds)
+
+
+@hypothesis.given(
+    pdu_type=pdu_types(),
+    host_list=st.lists(hosts(  # type: ignore
+        hostname=TIMEOUT_HOSTNAMES
+    ), min_size=1, max_size=1)
+)
+@hypothesis.settings(
+    deadline=None,
+    max_examples=10
+)
+def test_timeout(
+        pdu_type: PduType,
+        host_list: Sequence[Host],
+) -> None:
+    """Test timeout."""
+    response, errors = dispatch(
+        pdu_type, host_list, [NullVarBind([1], 0, 0)]
+    )
+
+    assert len(response) == 1
+    for r in response:
+        assert r.size == 0
+    assert len(errors) == len(host_list)
+    for error in errors:
+        assert error.type == SnmpErrorType.TIMEOUT_ERROR
+        assert error.message == 'Timeout error'
+
+
+@hypothesis.given(
+    pdu_type=pdu_types([PduType.NEXT, PduType.BULKGET]),
+    host_list=st.lists(hosts(  # type: ignore
+        hostname=VALID_HOSTNAMES + TIMEOUT_HOSTNAMES,
+        community_list=st.lists(communities(string=VALID_COMMUNITIES), min_size=1, max_size=1),
+    ), min_size=1, max_size=2)
+)
+@hypothesis.settings(
+    deadline=None
+)
+def test_send_failure(
+        pdu_type: PduType,
+        host_list: Sequence[Host],
+) -> None:
+    """Test send failure."""
+    response, errors = dispatch(
+        pdu_type, host_list, [NullVarBind([3], 0, 0)]
+    )
+
+    assert len(response) == 1
+    for r in response:
+        assert r.size == 0
+    assert len(errors) == len(host_list) * 2
+    for error in errors:
+        assert error.type in [SnmpErrorType.SEND_ERROR, SnmpErrorType.ASYNC_PROBE_ERROR]
 
 
 @hypothesis.given(
@@ -91,13 +173,13 @@ def test_end_of_mib_view(
 
 
 @hypothesis.given(
-    host_list=st.lists(hosts(
+    host_list=st.lists(hosts(  # type: ignore
         hostname=VALID_HOSTNAMES,
         community_list=st.lists(communities(string=VALID_COMMUNITIES), min_size=1, max_size=10),
         config=Config(bulk_repetitions=1)
     ), min_size=1, max_size=10)
 )
-def test_get_string(  # type: ignore
+def test_get_string(
         host_list: Sequence[Host]
 ) -> None:
     """Test end of MIB view."""

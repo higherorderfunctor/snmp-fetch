@@ -385,7 +385,7 @@ PYBIND11_MODULE(api, m) {
       "dispatch", &dispatch, "Collect SNMP objects from remote devices",
       py::arg("pdu_type"),
       py::arg("hosts"),
-      py::arg("var_binds"),
+      py::arg("null_var_binds"),
       py::arg("config") = std::nullopt,
       py::arg("max_active_async_sessions") = DEFAULT_MAX_ACTIVE_ASYNC_SESSIONS
   );
