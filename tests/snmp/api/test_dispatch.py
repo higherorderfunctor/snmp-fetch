@@ -4,6 +4,7 @@ from typing import Sequence, cast
 
 import hypothesis
 import hypothesis.strategies as st
+import numpy as np
 import pytest
 from numpy.random import choice, seed
 
@@ -52,12 +53,12 @@ def test_no_such_instance(
         host_list: Sequence[Host]
 ) -> None:
     """Test no such instance."""
-    results, errors = dispatch(
+    response, errors = dispatch(
         PduType.GET, host_list, [NullVarBind([1], 0, 0)]
     )
 
-    assert len(results) == 1
-    assert results[0].size == 0
+    assert len(response) == 1
+    assert response[0].size == 0
     assert len(errors) == len(host_list)
     for error in errors:
         assert error.type == SnmpErrorType.VALUE_WARNING
@@ -77,13 +78,48 @@ def test_end_of_mib_view(
         host_list: Sequence[Host]
 ) -> None:
     """Test end of MIB view."""
-    results, errors = dispatch(
+    response, errors = dispatch(
         pdu_type, host_list, [NullVarBind([2, 0], 0, 0)]
     )
 
-    assert len(results) == 1
-    assert results[0].size == 0
+    assert len(response) == 1
+    assert response[0].size == 0
     assert len(errors) == len(host_list)
     for error in errors:
         assert error.type == SnmpErrorType.VALUE_WARNING
         assert error.message == 'END_OF_MIB_VIEW'
+
+
+@hypothesis.given(
+    host_list=st.lists(hosts(
+        hostname=VALID_HOSTNAMES,
+        community_list=st.lists(communities(string=VALID_COMMUNITIES), min_size=1, max_size=10),
+        config=Config(bulk_repetitions=1)
+    ), min_size=1, max_size=10)
+)
+def test_get_string(  # type: ignore
+        host_list: Sequence[Host]
+) -> None:
+    """Test end of MIB view."""
+    response, errors = dispatch(
+        PduType.GET, host_list, [NullVarBind([1, 3, 6, 1, 2, 1, 1, 1, 0], 0, 256)]
+    )
+
+    assert len(response) == 1
+    assert response[0].size == 1
+
+    results = response[0].view([
+        ('#id', np.uint64),
+        ('#community_index', np.uint64),
+        ('#oid_size', np.uint64),
+        ('#value_size', np.uint64),
+        ('#value_type', np.uint64),
+        ('#timestamp', 'datetime64[s]'),
+        ('#oid', (np.uint64, 0)),
+        ('#value', 'S256')
+    ])
+
+    for row in results:
+        row['#value_type'] = 4
+
+    assert len(errors) == 0

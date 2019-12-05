@@ -64,7 +64,7 @@ class MetaObjectType(type):
         ('#oid_size', np.uint64),
         ('#value_size', np.uint64),
         ('#value_type', np.uint64),
-        ('#timestamp', 'datetime64[s]'),
+        ('#timestamp', 'datetime64[s]')
     ]))
 
     @property
