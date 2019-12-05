@@ -106,7 +106,6 @@ def test_get_string(  # type: ignore
     )
 
     assert len(response) == 1
-    assert response[0].size == 1
 
     results = response[0].view([
         ('#id', np.uint64),
