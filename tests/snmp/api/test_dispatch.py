@@ -10,8 +10,8 @@ from numpy.random import choice, seed
 
 from snmp_fetch.snmp.api import Config, Host, NullVarBind, PduType, SnmpErrorType, dispatch
 from tests.snmp.strategies import (
-    TIMEOUT_HOSTNAMES, VALID_COMMUNITIES, VALID_HOSTNAMES, communities, configs, hosts,
-    null_var_binds, oids, pdu_types
+    TIMEOUT_HOSTNAMES, VALID_COMMUNITIES, VALID_HOSTNAMES, communities, hosts, null_var_binds, oids,
+    pdu_types
 )
 
 
