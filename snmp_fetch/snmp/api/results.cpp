@@ -126,15 +126,17 @@ void append_result(
   size_t oid_buffer_size = UINT64_ALIGN((*session.null_var_binds)[idx].oid_size);
   size_t value_buffer_size = UINT64_ALIGN((*session.null_var_binds)[idx].value_size);
 
-  // get the struct size of elements in the result slot
-  size_t dtype_size = (
+  // get the record size to store
+  size_t record_size = (
+      // record size
+      sizeof(uint64_t) +
       // host id
       sizeof(uint64_t) +
       // community index
       sizeof(uint64_t) +
-      // oid buffer size (in suboids, not bytes)
+      // oid  size (bytes)
       sizeof(uint64_t) +
-      // value buffer size (bytes)
+      // value size (bytes)
       sizeof(uint64_t) +
       // value type code
       sizeof(uint64_t) +
@@ -149,11 +151,18 @@ void append_result(
   // increase the response column to copy in the response variable binding
   auto &result = (*session.results)[idx];
   size_t pos = result.size();
-  result.resize(pos + dtype_size);
+  result.resize(pos + record_size);
+
+  // copy the record size
+  memcpy(
+    &result[pos],
+    &record_size,
+    sizeof(uint64_t)
+  );
 
   // copy the host id
   memcpy(
-      &result[pos],
+      &result[pos += sizeof(uint64_t)],
       &session.host.id,
       sizeof(uint64_t)
   );
@@ -164,9 +173,10 @@ void append_result(
       sizeof(uint64_t)
   );
   // copy the OID buffer size (in suboids, not bytes)
+  auto resp_var_bind_name_size = resp_var_bind.name_length * sizeof(uint64_t);
   memcpy(
       &result[pos += sizeof(uint64_t)],
-      &resp_var_bind.name_length,
+      &resp_var_bind_name_size,
       sizeof(uint64_t)
   );
   // copy the result buffer size (bytes)
