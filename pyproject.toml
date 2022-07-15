@@ -20,7 +20,7 @@ pandas = "^0.25"
 attrs = "^19.1"
 toolz = "^0.10.0"
 jupyterlab = {version = "^1.1", optional = true}
-distributed = {version = "^2.6", optional = true}
+distributed = {version = "^2021.10", optional = true}
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.3"
